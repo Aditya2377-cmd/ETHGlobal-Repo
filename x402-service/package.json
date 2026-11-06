@@ -1,0 +1,50 @@
+{
+  "name": "@perpay/x402-service",
+  "version": "1.0.0",
+  "description": "PerPay x402 v2 payment gateway and Hedera Testnet settlement engine",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "testnet:smoke": "tsx src/scripts/smoke-test.ts",
+    "client:cli": "tsx src/client/cli-payer.ts"
+  },
+  "keywords": [
+    "x402",
+    "hedera",
+    "testnet",
+    "hbar",
+    "payments",
+    "ai",
+    "microtransactions"
+  ],
+  "author": "PerPay Engineering",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@x402/core": "2.30.0",
+    "@x402/express": "2.30.0",
+    "@x402/hedera": "2.30.0",
+    "better-sqlite3": "^11.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.4",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

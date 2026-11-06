@@ -1,0 +1,204 @@
+openapi: 3.1.0
+info:
+  title: PerPay x402 Hedera Payment Service API
+  description: >
+    PerPay usage-based AI payment gateway and settlement engine.
+    Implements x402 v2 payment requirements with native HBAR settlements on Hedera Testnet.
+  version: 2.0.0
+
+servers:
+  - url: http://localhost:4020
+    description: Local Payment Service
+  - url: http://localhost:8000
+    description: Local FastAPI Gateway
+
+paths:
+  /health:
+    get:
+      summary: Service Health Check
+      description: Returns service status, node version, uptime, and database connection state.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: "ok" }
+                  timestamp: { type: string, format: date-time }
+                  network: { type: string, example: "hedera:testnet" }
+                  receiverAccountId: { type: string, example: "0.0.YOUR_RECEIVER_ID" }
+                  facilitator:
+                    type: object
+                    properties:
+                      url: { type: string }
+                      connected: { type: boolean }
+                      feePayer: { type: string }
+
+  /api/v1/generations/{generation_id}/result:
+    get:
+      summary: Retrieve Stored AI Generation Result (x402 Pay-to-Unlock)
+      description: >
+        Protected resource endpoint.
+        Returns HTTP 402 with PAYMENT-REQUIRED header when payment is needed.
+        Accepts PAYMENT-SIGNATURE header containing signed Hedera transaction.
+        Returns HTTP 200 with PAYMENT-RESPONSE header and the unlocked AI response once settled.
+      parameters:
+        - name: generation_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique generation identifier
+        - name: X-User-Id
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Authenticated user identifier
+        - name: PAYMENT-SIGNATURE
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Base64-encoded x402 v2 payment signature payload
+      responses:
+        '200':
+          description: Response unlocked after confirmed settlement
+          headers:
+            PAYMENT-RESPONSE:
+              description: Base64-encoded settlement proof
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generation_id: { type: string }
+                  content: { type: string }
+                  model: { type: string }
+                  total_tokens: { type: integer }
+                  settlement:
+                    type: object
+                    properties:
+                      transaction_id: { type: string }
+                      transaction_url: { type: string }
+                      charge_tinybars: { type: integer }
+                      charge_hbar: { type: string }
+        '402':
+          description: Payment Required (x402 v2 challenge)
+          headers:
+            PAYMENT-REQUIRED:
+              description: Base64-encoded x402 v2 payment requirements document
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, example: "Payment Required" }
+                  invoice_id: { type: string }
+                  charge_tinybars: { type: integer }
+                  charge_hbar: { type: string }
+                  network: { type: string, example: "hedera:testnet" }
+                  payTo: { type: string, example: "0.0.12345" }
+                  feePayer: { type: string, example: "0.0.9185802" }
+
+  /internal/v1/generations/{generation_id}/payment-context:
+    get:
+      summary: Internal Invoice Context Query (FastAPI -> x402 or x402 -> FastAPI)
+      description: Retrieves trusted pricing, token counts, and invoice details from FastAPI.
+      security:
+        - InternalServiceSecret: []
+      parameters:
+        - name: generation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trusted invoice context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrustedInvoiceContext'
+
+  /internal/v1/payments/settlement:
+    post:
+      summary: Internal Settlement Notification (x402 -> FastAPI)
+      description: Notifies FastAPI of confirmed Hedera settlement to unlock generation and release user lock.
+      security:
+        - InternalServiceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettlementNotification'
+      responses:
+        '200':
+          description: Settlement notification acknowledged
+
+components:
+  securitySchemes:
+    InternalServiceSecret:
+      type: apiKey
+      in: header
+      name: X-Internal-Secret
+  schemas:
+    TrustedInvoiceContext:
+      type: object
+      required:
+        - invoice_id
+        - generation_id
+        - request_id
+        - user_id
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+        - charge_tinybars
+        - charge_hbar
+        - model
+        - status
+        - created_at
+        - expires_at
+      properties:
+        invoice_id: { type: string }
+        generation_id: { type: string }
+        request_id: { type: string }
+        user_id: { type: string }
+        prompt_tokens: { type: integer }
+        completion_tokens: { type: integer }
+        total_tokens: { type: integer }
+        charge_tinybars: { type: integer }
+        charge_hbar: { type: string }
+        model: { type: string }
+        status: { type: string, enum: [UNPAID, PAID, EXPIRED, CANCELLED] }
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+    SettlementNotification:
+      type: object
+      required:
+        - invoice_id
+        - generation_id
+        - transaction_id
+        - payer_account_id
+        - receiver_account_id
+        - amount_tinybars
+        - network
+        - confirmed_at
+        - transaction_url
+      properties:
+        invoice_id: { type: string }
+        generation_id: { type: string }
+        transaction_id: { type: string }
+        payer_account_id: { type: string }
+        receiver_account_id: { type: string }
+        amount_tinybars: { type: integer }
+        network: { type: string, example: "hedera:testnet" }
+        confirmed_at: { type: string, format: date-time }
+        transaction_url: { type: string, format: uri }
