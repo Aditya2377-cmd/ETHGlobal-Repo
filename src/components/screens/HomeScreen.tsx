@@ -137,20 +137,20 @@ export const HomeScreen: React.FC = () => {
             <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Connected Hedera Testnet Account
             </span>
-            <span className="fin-badge fin-badge-hedera" style={{ fontSize: '14px', padding: '6px 14px', border: '1.5px solid #1E40AF', fontWeight: 700 }}>
-              0.0.4829103
+            <span className="fin-badge fin-badge-hedera font-mono" style={{ fontSize: '14px', padding: '6px 14px', border: '1.5px solid #1E40AF', fontWeight: 700 }}>
+              {userAccount?.connected_wallet || '0.0.4829103'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', marginTop: '8px' }}>
-            <span style={{ fontSize: '48px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
-              {userAccount?.testnet_balance_hbar.toFixed(4) || '48.9521'}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', marginTop: '8px', flexWrap: 'wrap' }}>
+            <span className="font-mono" style={{ fontSize: '44px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
+              {(userAccount?.testnet_balance_hbar ?? 0).toFixed(8)}
             </span>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: '#1D4ED8' }}>
+            <span style={{ fontSize: '26px', fontWeight: 800, color: '#1D4ED8' }}>
               ℏ HBAR
             </span>
-            <span style={{ fontSize: '18px', color: '#64748B', marginLeft: '6px' }}>
-              (~4,895,210,000 tinybars)
+            <span className="font-mono" style={{ fontSize: '18px', color: '#64748B', marginLeft: '6px', fontWeight: 600 }}>
+              ({(userAccount?.testnet_balance_tinybars ?? 0).toLocaleString()} tinybars)
             </span>
           </div>
 

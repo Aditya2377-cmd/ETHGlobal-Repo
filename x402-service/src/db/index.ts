@@ -1,12 +1,12 @@
-import Database from "better-sqlite3";
+import Database, { DatabaseInstance } from "./sqlite";
 import fs from "fs";
 import path from "path";
 import { config } from "../config";
 import { CREATE_TABLES_SQL } from "./schema";
 
-let dbInstance: Database.Database | null = null;
+let dbInstance: DatabaseInstance | null = null;
 
-export function getDatabase(dbPath?: string): Database.Database {
+export function getDatabase(dbPath?: string): DatabaseInstance {
   if (dbInstance) {
     return dbInstance;
   }
@@ -30,7 +30,7 @@ export function getDatabase(dbPath?: string): Database.Database {
   return db;
 }
 
-export function seedDemoInvoices(db: Database.Database): void {
+export function seedDemoInvoices(db: DatabaseInstance): void {
   const existing = db
     .prepare("SELECT COUNT(*) as cnt FROM invoices_cache WHERE generation_id = 'test_gen_1'")
     .get() as { cnt: number };
@@ -90,7 +90,7 @@ export function closeDatabase(): void {
 /**
  * Creates an in-memory SQLite database instance (primarily for tests).
  */
-export function createInMemoryDatabase(): Database.Database {
+export function createInMemoryDatabase(): DatabaseInstance {
   const db = new Database(":memory:");
   db.pragma("foreign_keys = ON");
   db.exec(CREATE_TABLES_SQL);

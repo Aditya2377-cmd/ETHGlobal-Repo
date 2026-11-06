@@ -117,27 +117,6 @@ export const Header: React.FC = () => {
           )}
         </button>
 
-        {/* Palette Switcher */}
-        <button
-          onClick={togglePaletteMode}
-          className="fin-btn fin-btn-secondary hide-on-mobile"
-          title="Cycle through vibrant procedural universe color spectrums"
-          style={{
-            fontSize: '14px',
-            padding: '10px 16px',
-            border: '2px solid #0F172A',
-            fontWeight: 700,
-            backgroundColor: '#FFFFFF',
-          }}
-        >
-          <Sparkles size={16} color="#D97706" />
-          <span>
-            {paletteMode === 'spectrum' && '✨ Multi-Color'}
-            {paletteMode === 'perpay' && '🌲 Emerald/Amber'}
-            {paletteMode === 'codepen' && '🌈 Classic Sweep'}
-          </span>
-        </button>
-
         {/* Wallet Pill */}
         {userAccount?.connected_wallet ? (
           <button

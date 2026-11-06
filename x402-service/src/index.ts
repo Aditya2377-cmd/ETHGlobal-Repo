@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import type Database from "better-sqlite3";
+import type { DatabaseInstance } from "./db/sqlite";
 import { config } from "./config";
 import { getDatabase } from "./db";
 import { PaymentRepository } from "./db/repository";
@@ -21,7 +21,7 @@ export interface AppContext {
   outboxService: OutboxService;
   paymentService: PaymentService;
   repo: PaymentRepository;
-  db: Database.Database;
+  db: DatabaseInstance;
 }
 
 export function createApp(): AppContext {

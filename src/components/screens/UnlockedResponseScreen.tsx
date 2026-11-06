@@ -12,6 +12,7 @@ import {
   Clock,
   Cpu,
 } from 'lucide-react';
+import { MarkdownRenderer } from '../common/MarkdownRenderer';
 
 export const UnlockedResponseScreen: React.FC = () => {
   const { currentUnlockedResponse, navigateTo } = useApp();
@@ -150,22 +151,17 @@ export const UnlockedResponseScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Rendered AI Output Body (Very Large & Clear Times New Roman) */}
+        {/* Rendered AI Output Body with Safe Markdown Formatting */}
         <div
           style={{
-            fontSize: '24px',
-            lineHeight: 1.9,
-            color: '#0F172A',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'var(--font-sans)',
             backgroundColor: '#FFFFFF',
-            padding: '40px',
+            padding: '36px 40px',
             border: '2px solid #0F172A',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
             overflowX: 'auto',
           }}
         >
-          {currentUnlockedResponse.response_text}
+          <MarkdownRenderer content={currentUnlockedResponse.response_text} />
         </div>
       </div>
 
@@ -198,7 +194,7 @@ export const UnlockedResponseScreen: React.FC = () => {
               FINAL CHARGE
             </div>
             <div className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#047857', marginTop: '6px' }}>
-              {currentUnlockedResponse.charge_hbar.toFixed(6)} ℏ ({currentUnlockedResponse.charge_tinybars.toLocaleString()} tinybars)
+              {currentUnlockedResponse.charge_hbar.toFixed(8)} ℏ ({currentUnlockedResponse.charge_tinybars.toLocaleString()} tinybars)
             </div>
           </div>
 

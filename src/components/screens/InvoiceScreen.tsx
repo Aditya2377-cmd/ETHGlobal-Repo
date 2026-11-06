@@ -195,7 +195,7 @@ export const InvoiceScreen: React.FC = () => {
                 EXACT AMOUNT DUE
               </div>
               <div className="font-mono" style={{ fontSize: '46px', fontWeight: 800, color: '#1D4ED8', lineHeight: 1.1, marginTop: '8px' }}>
-                {currentInvoice.charge_hbar.toFixed(6)} ℏ
+                {currentInvoice.charge_hbar.toFixed(8)} ℏ
               </div>
               <div className="font-mono" style={{ fontSize: '18px', color: '#475569', marginTop: '8px', fontWeight: 700 }}>
                 {currentInvoice.charge_tinybars.toLocaleString()} tinybars
@@ -385,7 +385,7 @@ export const InvoiceScreen: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', backgroundColor: '#F8FAFC', border: '1.5px solid #CBD5E1' }}>
                 <span style={{ color: '#64748B', fontWeight: 700 }}>Exact Amount:</span>
                 <span className="font-mono" style={{ fontWeight: 800, color: '#1D4ED8' }}>
-                  {currentInvoice.charge_hbar.toFixed(6)} ℏ ({currentInvoice.charge_tinybars} tinybars)
+                  {currentInvoice.charge_hbar.toFixed(8)} ℏ ({currentInvoice.charge_tinybars} tinybars)
                 </span>
               </div>
 
@@ -468,7 +468,7 @@ export const InvoiceScreen: React.FC = () => {
                 style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
               >
                 <CheckCircle2 size={24} />
-                <span>Verify On-Chain Transfer ({currentInvoice.charge_hbar.toFixed(6)} ℏ)</span>
+                <span>Verify On-Chain Transfer ({currentInvoice.charge_hbar.toFixed(8)} ℏ)</span>
               </button>
             ) : !userAccount?.connected_wallet ? (
               <button
@@ -487,7 +487,7 @@ export const InvoiceScreen: React.FC = () => {
                 style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
               >
                 <CheckCircle2 size={24} />
-                <span>Authorize & Pay {currentInvoice.charge_hbar.toFixed(6)} ℏ via x402</span>
+                <span>Authorize & Pay {currentInvoice.charge_hbar.toFixed(8)} ℏ via x402</span>
               </button>
             )}
           </div>

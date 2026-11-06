@@ -1,407 +1,123 @@
 import os
+import sys
 import json
 import sqlite3
-from datetime import datetime, timedelta
-from typing import AsyncGenerator, Optional
-from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from datetime import datetime, timezone, timedelta
+from typing import AsyncGenerator, Optional, List, Dict, Any
+
+# Ensure gateway and parent directory are on sys.path for direct execution
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+from fastapi import FastAPI, HTTPException, Header, BackgroundTasks, Request
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
-from groq import Groq
-from dotenv import load_dotenv
-import hashlib
-import hmac
 
-load_dotenv()
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 
-app = FastAPI(title="x402-openai-gateway")
+# Import database and service layer
+from gateway.database import init_db, get_db, DB_PATH
+from gateway.core.config import settings
+from gateway.services.pricing_service import MODEL_RATES, TINYBARS_PER_HBAR, HBAR_USD_RATE
+from gateway.api.requests import router as requests_router, create_ai_request, retrieve_unlocked_response
+from gateway.api.invoices import router as invoices_router, get_invoice_details
+from gateway.api.history import router as history_router, get_usage_and_payment_history
+from gateway.api.accounts import router as accounts_router, get_account_status
+from gateway.api.internal import router as internal_router
+from gateway.schemas.request import CreateRequestInput
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-SQLITE_DB = os.getenv("SQLITE_DB", "ledger.db")
-SPEND_CAP_MULTIPLIER = 1.5  # Allow 50% overage to avoid edge-case rejections
+app = FastAPI(
+    title="PerPay Gateway API",
+    description="Usage-based AI payment gateway settled on-chain via Hedera Testnet and x402 v2 protocol.",
+    version="2.0.0"
+)
 
-groq_client = Groq(api_key= GROQ_API_KEY )
+# Comprehensive CORS configuration supporting frontend and x402 headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["PAYMENT-REQUIRED", "PAYMENT-RESPONSE", "X-Payment-TxId", "Content-Type", "Authorization"]
+)
 
-# ============================================================================
-# DATABASE SETUP
-# ============================================================================
-
-def init_db():
-    """Initialize SQLite ledger."""
-    conn = sqlite3.connect(SQLITE_DB)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS usage_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ts TEXT NOT NULL,
-            wallet TEXT NOT NULL,
-            model TEXT NOT NULL,
-            prompt_tokens INTEGER,
-            completion_tokens INTEGER,
-            total_tokens INTEGER,
-            cost_wei INTEGER,
-            chain TEXT,
-            tx_hash TEXT,
-            status TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS escrow_ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            wallet TEXT NOT NULL,
-            balance_wei INTEGER DEFAULT 0,
-            spend_cap_wei INTEGER,
-            expiry TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
-
+# Initialize database
 init_db()
 
-# ============================================================================
-# PYDANTIC MODELS
-# ============================================================================
-
-class ChatCompletionRequest(BaseModel):
-    model: str
-    messages: list
-    stream: bool = True
-    temperature: float = 0.7
-    max_tokens: Optional[int] = None
-
-class UsageEvent(BaseModel):
-    ts: str
-    wallet: str
-    model: str
-    prompt_tokens: int
-    completion_tokens: int
-    cost_wei: int
-    chain: str
-    tx_hash: Optional[str] = None
-    status: str
+# Mount API Routers
+app.include_router(requests_router, prefix="/api/v1")
+app.include_router(invoices_router, prefix="/api/v1")
+app.include_router(history_router, prefix="/api/v1")
+app.include_router(accounts_router, prefix="/api/v1")
+app.include_router(internal_router)
 
 # ============================================================================
-# KEY VALIDATION (Task 5)
+# CONVENIENCE ALIASES MATCHING FRONTEND CLIENT ROUTES
 # ============================================================================
 
-def validate_capped_key(api_key: str) -> dict:
+@app.post("/api/v1/generations")
+@app.post("/api/generate")
+def generate_endpoint(input_data: CreateRequestInput):
     """
-    Parse and validate a capped Web3 key.
-    Format: sk-web3-<wallet>-<spend_cap_wei>-<expiry_timestamp>-<signature>
-    Returns: {"wallet": "0x...", "spend_cap_wei": 1000000, "expiry": "2024-01-15T12:00:00Z"}
+    Submits prompt for private AI generation, captures exact token accounting,
+    calculates usage-based charge, and returns unpaid invoice.
     """
-    if not api_key.startswith("sk-web3-"):
-        raise HTTPException(status_code=401, detail="Invalid key format")
-    
-    parts = api_key.split("-")
-    if len(parts) < 6:
-        raise HTTPException(status_code=401, detail="Malformed key")
-    
-    wallet = parts[2]
-    try:
-        spend_cap_wei = int(parts[3])
-        expiry_str = parts[4]
-        # Simple validation: expiry should be ISO format
-        expiry = datetime.fromisoformat(expiry_str.replace("Z", "+00:00"))
-        if expiry < datetime.now(expiry.tzinfo):
-            raise HTTPException(status_code=401, detail="Key expired")
-    except (ValueError, IndexError):
-        raise HTTPException(status_code=401, detail="Invalid key parameters")
-    
-    return {
-        "wallet": wallet,
-        "spend_cap_wei": spend_cap_wei,
-        "expiry": expiry_str
-    }
+    return create_ai_request(input_data)
 
-# ============================================================================
-# BUDGET CHECK (Task 6)
-# ============================================================================
+@app.get("/api/user/account")
+def account_alias():
+    return get_account_status()
 
-def check_budget(wallet: str, estimated_cost_wei: int) -> dict:
-    """
-    Check if wallet has enough balance. If not, return 402 with payment instructions.
-    Returns: {"ok": True} or {"ok": False, "402_payload": {...}}
-    """
-    conn = sqlite3.connect(SQLITE_DB)
-    c = conn.cursor()
-    c.execute("SELECT balance_wei, spend_cap_wei FROM escrow_ledger WHERE wallet = ?", (wallet,))
-    row = c.fetchone()
-    conn.close()
-    
-    if not row:
-        # No escrow found; return 402 with payment instructions
-        return {
-            "ok": False,
-            "status_code": 402,
-            "payment_required": {
-                "message": "Payment required to use this API",
-                "chain": "hedera-testnet",
-                "seller_account": "0.0.11326767", 
-                "amount_hbar": 0.01,
-                "estimated_cost_wei": estimated_cost_wei,
-                "deposit_link": "https://portal.hedera.com/faucet"
-            }
-        }
-    
-    balance_wei, spend_cap_wei = row
-    if balance_wei < estimated_cost_wei:
-        return {
-            "ok": False,
-            "status_code": 402,
-            "payment_required": {
-                "message": f"Insufficient balance. Current: {balance_wei} Wei, Required: {estimated_cost_wei} Wei",
-                "chain": "hedera-testnet",
-                "seller_account": "0.0.11326767",
-                "amount_hbar": 0.01,
-                "current_balance_wei": balance_wei,
-                "estimated_cost_wei": estimated_cost_wei
-            }
-        }
-    
-    return {"ok": True}
+@app.get("/api/response/{request_id}")
+def response_alias(request_id: str):
+    return retrieve_unlocked_response(request_id)
 
-# ============================================================================
-# STREAMING + TOKEN COUNTING (Task 2 & 3)
-# ============================================================================
+@app.get("/api/transactions")
+def transactions_alias():
+    res = get_usage_and_payment_history()
+    return res["history"]
 
-async def stream_groq_and_count(
-    request: ChatCompletionRequest,
-    wallet: str
-) -> AsyncGenerator[str, None]:
-    """
-    Stream Groq response while counting exact tokens.
-    Yields OpenAI-compatible SSE chunks.
-    """
-    model = "llama-3.3-70b-versatile"  # Override to Groq's model
-    
-    try:
-        # Call Groq with stream_options for exact usage
-        stream = groq_client.chat.completions.create(
-            model=model,
-            messages=request.messages,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens,
-            stream=True,
-            stream_options={"include_usage": True}  # Critical: get exact token counts
-        )
-        
-        completion_tokens = 0
-        prompt_tokens = 0
-        total_tokens = 0
-        
-        for chunk in stream:
-            # Check if this chunk has usage data (end of stream)
-            if chunk.usage:
-                prompt_tokens = chunk.usage.prompt_tokens
-                completion_tokens = chunk.usage.completion_tokens
-                total_tokens = chunk.usage.total_tokens
-            
-            # Stream the delta
-            if chunk.choices and chunk.choices[0].delta:
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    chunk_data = {
-                        "id": "chatcmpl-local",
-                        "object": "text_completion.chunk",
-                        "created": int(datetime.now().timestamp()),
-                        "model": model,
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {"content": delta.content},
-                                "finish_reason": None
-                            }
-                        ]
-                    }
-                    yield f"data: {json.dumps(chunk_data)}\n\n"
-            
-            # On finish, yield usage
-            if chunk.choices and chunk.choices[0].finish_reason == "stop":
-                finish_data = {
-                    "id": "chatcmpl-local",
-                    "object": "text_completion.chunk",
-                    "created": int(datetime.now().timestamp()),
-                    "model": model,
-                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
-                    "usage": {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
-                        "total_tokens": total_tokens
-                    }
-                }
-                yield f"data: {json.dumps(finish_data)}\n\n"
-        
-        yield "data: [DONE]\n\n"
-        
-        # Return token counts for logging
-        # Log token counts directly to SQLite
-        log_usage_event(
-            wallet=wallet,
-            model="llama-3.3-70b-versatile",
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=total_tokens,
-            cost_wei=total_tokens * 10,
-            status="ok"
-        )
-        return
-    
-    except Exception as e:
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
-        raise
+@app.get("/api/invoices/{invoice_id}")
+def invoice_alias(invoice_id: str):
+    return get_invoice_details(invoice_id)
 
-# ============================================================================
-# USAGE EVENT LOGGER (Task 4)
-# ============================================================================
-
-def log_usage_event(
-    wallet: str,
-    model: str,
-    prompt_tokens: int,
-    completion_tokens: int,
-    total_tokens: int,
-    cost_wei: int,
-    chain: str = "hedera-testnet",
-    tx_hash: Optional[str] = None,
-    status: str = "ok"
-):
-    """Log usage to SQLite and deduct from escrow balance."""
-    conn = sqlite3.connect(SQLITE_DB)
-    c = conn.cursor()
-    
-    # Insert event
-    c.execute("""
-        INSERT INTO usage_events 
-        (ts, wallet, model, prompt_tokens, completion_tokens, total_tokens, cost_wei, chain, tx_hash, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        datetime.now().isoformat(),
-        wallet,
-        model,
-        prompt_tokens,
-        completion_tokens,
-        total_tokens,
-        cost_wei,
-        chain,
-        tx_hash,
-        status
-    ))
-    
-    # Deduct from balance
-    c.execute(
-        "UPDATE escrow_ledger SET balance_wei = balance_wei - ? WHERE wallet = ?",
-        (cost_wei, wallet)
-    )
-    
-    conn.commit()
-    conn.close()
-
-# ============================================================================
-# MAIN ENDPOINT (Task 2)
-# ============================================================================
-
-from fastapi.responses import JSONResponse, StreamingResponse
-
-@app.post("/v1/chat/completions")
-async def chat_completions(
-    request: ChatCompletionRequest,
-    authorization: Optional[str] = Header(None),
-    x_payment_txid: Optional[str] = Header(None, alias="X-Payment-TxId")
-):
-    """OpenAI-compatible chat endpoint with x402 payment verification."""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-
-    api_key = authorization.replace("Bearer ", "")
-
-    # Validate capped session key
-    key_data = validate_capped_key(api_key)
-    wallet = key_data["wallet"]
-
-    # 1. PROCESS INCOMING HEDERA PAYMENT PROOF
-    if x_payment_txid:
-        conn = sqlite3.connect(SQLITE_DB)
-        c = conn.cursor()
-        
-        # Prevent replay attacks
-        c.execute("SELECT tx_hash FROM usage_events WHERE tx_hash = ?", (x_payment_txid,))
-        if c.fetchone():
-            conn.close()
-            raise HTTPException(status_code=400, detail="Transaction ID already redeemed")
-
-        # Credit wallet in escrow ledger (0.01 HBAR = 1,000,000 tinybar deposit)
-        c.execute("""
-            INSERT INTO escrow_ledger (wallet, balance_wei, spend_cap_wei)
-            VALUES (?, 1000000, 1000000)
-            ON CONFLICT(wallet) DO UPDATE SET balance_wei = balance_wei + 1000000
-        """, (wallet,))
-        conn.commit()
-        conn.close()
-        print(f"[Gateway] Verified Hedera payment {x_payment_txid}! Credited wallet {wallet}")
-
-    # 2. Check budget (estimate 10 tinybar per character)
-    estimated_cost = len(str(request.messages)) * 10
-    budget_check = check_budget(wallet, estimated_cost)
-
-    # 3. If balance insufficient, return true HTTP 402
-    if not budget_check["ok"]:
-        return JSONResponse(
-            status_code=402,
-            content={
-                "error": {
-                    "message": "Payment required to use this API",
-                    "type": "insufficient_balance",
-                    "code": "402_payment_required"
-                },
-                "payment_required": budget_check["payment_required"]
-            }
-        )
-
-    # 4. Stream directly using stream_groq_and_count (handles SSE + DB logging)
-    return StreamingResponse(
-        stream_groq_and_count(request, wallet),
-        media_type="text/event-stream"
-    )
-
-# ============================================================================
-# EVENTS ENDPOINT (For Pawan's Dashboard)
-# ============================================================================
-
-@app.get("/events")
-def get_events(limit: int = 100):
-    """Return recent usage events as JSON for the dashboard."""
-    conn = sqlite3.connect(SQLITE_DB)
-    c = conn.cursor()
-    c.execute("""
-        SELECT ts, wallet, model, prompt_tokens, completion_tokens, total_tokens, cost_wei, chain, tx_hash, status
-        FROM usage_events
-        ORDER BY created_at DESC
-        LIMIT ?
-    """, (limit,))
-    
-    rows = c.fetchall()
-    conn.close()
-    
-    events = []
-    for row in rows:
-        events.append({
-            "ts": row[0],
-            "wallet": row[1],
-            "model": row[2],
-            "prompt_tokens": row[3],
-            "completion_tokens": row[4],
-            "total_tokens": row[5],
-            "cost_wei": row[6],
-            "chain": row[7],
-            "tx_hash": row[8],
-            "status": row[9]
+@app.get("/api/v1/pricing")
+def get_pricing_schedule():
+    """Returns public pricing schedule per 1M tokens across supported models."""
+    models = []
+    for model_id, rates in MODEL_RATES.items():
+        models.append({
+            "model_id": model_id,
+            "name": rates["name"],
+            "input_per_1m_usd": rates["input_per_1m_usd"],
+            "output_per_1m_usd": rates["output_per_1m_usd"],
+            "markup_multiplier": rates["markup_multiplier"],
+            "customer_input_per_1m_hbar": (rates["input_per_1m_usd"] * rates["markup_multiplier"]) / HBAR_USD_RATE,
+            "customer_output_per_1m_hbar": (rates["output_per_1m_usd"] * rates["markup_multiplier"]) / HBAR_USD_RATE,
         })
-    
-    return {"events": events}
+    return {
+        "asset": "HBAR",
+        "tinybars_per_hbar": TINYBARS_PER_HBAR,
+        "hbar_usd_reference": HBAR_USD_RATE,
+        "network": settings.HEDERA_NETWORK,
+        "models": models
+    }
 
 # ============================================================================
 # HEALTH CHECK
@@ -409,12 +125,188 @@ def get_events(limit: int = 100):
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "healthy",
+        "service": "perpay-gateway",
+        "network": settings.HEDERA_NETWORK,
+        "treasury_account": settings.TREASURY_ACCOUNT_ID,
+        "ai_provider": "Groq",
+        "groq_configured": bool(os.getenv("GROQ_API_KEY")),
+        "database": DB_PATH
+    }
 
 # ============================================================================
-# RUN
+# MEMBER 1 COMPATIBILITY LAYER: STREAMING CHAT & WEB3 KEYS
 # ============================================================================
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+groq_client = None
+if GROQ_API_KEY:
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+    except Exception as e:
+        print(f"[Gateway] Groq client initialization notice: {e}")
+
+class ChatCompletionRequest(BaseModel):
+    model: str = "llama-3.3-70b-versatile"
+    messages: list
+    stream: bool = True
+    temperature: float = 0.7
+    max_tokens: Optional[int] = None
+
+def validate_capped_key(api_key: str) -> dict:
+    if not api_key.startswith("sk-web3-"):
+        raise HTTPException(status_code=401, detail="Invalid key format")
+    parts = api_key.split("-")
+    if len(parts) < 6:
+        raise HTTPException(status_code=401, detail="Malformed key")
+    wallet = parts[2]
+    try:
+        spend_cap_wei = int(parts[3])
+        expiry_str = parts[4]
+        expiry = datetime.fromisoformat(expiry_str.replace("Z", "+00:00"))
+        if expiry < datetime.now(expiry.tzinfo):
+            raise HTTPException(status_code=401, detail="Key expired")
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=401, detail="Invalid key parameters")
+    return {"wallet": wallet, "spend_cap_wei": spend_cap_wei, "expiry": expiry_str}
+
+def check_budget(wallet: str, estimated_cost_wei: int) -> dict:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT balance_wei, spend_cap_wei FROM escrow_ledger WHERE wallet = ?", (wallet,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return {
+            "ok": False,
+            "status_code": 402,
+            "payment_required": {
+                "message": "Payment required to use this API",
+                "chain": "hedera-testnet",
+                "seller_account": settings.TREASURY_ACCOUNT_ID,
+                "amount_hbar": 0.01,
+                "estimated_cost_wei": estimated_cost_wei,
+                "deposit_link": "https://portal.hedera.com/faucet"
+            }
+        }
+    balance_wei, spend_cap_wei = row[0], row[1]
+    if balance_wei < estimated_cost_wei:
+        return {
+            "ok": False,
+            "status_code": 402,
+            "payment_required": {
+                "message": f"Insufficient balance. Current: {balance_wei} Wei, Required: {estimated_cost_wei} Wei",
+                "chain": "hedera-testnet",
+                "seller_account": settings.TREASURY_ACCOUNT_ID,
+                "amount_hbar": 0.01,
+                "current_balance_wei": balance_wei,
+                "estimated_cost_wei": estimated_cost_wei
+            }
+        }
+    return {"ok": True}
+
+async def stream_groq_and_count(request: ChatCompletionRequest, wallet: str) -> AsyncGenerator[str, None]:
+    model = "llama-3.3-70b-versatile"
+    try:
+        if not groq_client:
+            mock_chunk = {
+                "id": "chatcmpl-mock",
+                "object": "text_completion.chunk",
+                "created": int(datetime.now().timestamp()),
+                "model": model,
+                "choices": [{"index": 0, "delta": {"content": "PerPay streaming AI generation powered by Groq and settled on Hedera."}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": 15, "completion_tokens": 30, "total_tokens": 45}
+            }
+            yield f"data: {json.dumps(mock_chunk)}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
+        stream = groq_client.chat.completions.create(
+            model=model,
+            messages=request.messages,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            stream=True,
+            stream_options={"include_usage": True}
+        )
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        for chunk in stream:
+            if chunk.usage:
+                prompt_tokens = chunk.usage.prompt_tokens
+                completion_tokens = chunk.usage.completion_tokens
+                total_tokens = chunk.usage.total_tokens
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                chunk_data = {
+                    "id": "chatcmpl-local",
+                    "object": "text_completion.chunk",
+                    "created": int(datetime.now().timestamp()),
+                    "model": model,
+                    "choices": [{"index": 0, "delta": {"content": chunk.choices[0].delta.content}, "finish_reason": None}]
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+        yield "data: [DONE]\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+@app.post("/v1/chat/completions")
+async def chat_completions(
+    request: ChatCompletionRequest,
+    authorization: Optional[str] = Header(None),
+    x_payment_txid: Optional[str] = Header(None, alias="X-Payment-TxId")
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    api_key = authorization.replace("Bearer ", "")
+    key_data = validate_capped_key(api_key)
+    wallet = key_data["wallet"]
+
+    estimated_cost = len(str(request.messages)) * 10
+    budget_check = check_budget(wallet, estimated_cost)
+    if not budget_check["ok"]:
+        return JSONResponse(status_code=402, content=budget_check["payment_required"])
+
+    return StreamingResponse(stream_groq_and_count(request, wallet), media_type="text/event-stream")
+
+@app.get("/events")
+def get_events(limit: int = 100):
+    """Member 1's events endpoint for recent token usage events."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT created_at, user_id, model, prompt_tokens, completion_tokens, total_tokens, amount_tinybars, status
+        FROM ai_requests
+        ORDER BY created_at DESC
+        LIMIT ?
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    events = []
+    for r in rows:
+        events.append({
+            "ts": r["created_at"],
+            "wallet": r["user_id"],
+            "model": r["model"],
+            "prompt_tokens": r["prompt_tokens"],
+            "completion_tokens": r["completion_tokens"],
+            "total_tokens": r["total_tokens"],
+            "cost_tinybars": r["amount_tinybars"],
+            "chain": "hedera-testnet",
+            "status": r["status"]
+        })
+    return {"events": events}
+
+@app.get("/")
+def root():
+    return {
+        "project": "PerPay",
+        "tagline": "Usage-based AI payments. Settled on-chain.",
+        "docs": "/docs",
+        "health": "/health",
+        "api_v1": "/api/v1"
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
-    

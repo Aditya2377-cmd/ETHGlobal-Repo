@@ -197,10 +197,10 @@ export const WorkspaceScreen: React.FC = () => {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {[
+                'Explain robotics in three concise bullet points.',
+                'Explain the difference between HBAR and tinybars in two sentences.',
                 'Analyze Hedera Hashgraph consensus mechanism and tinybar tokenomics',
                 'Write an x402 v2 payment verification module in TypeScript',
-                'Summarize Groq LPU inference latency vs GPU clusters',
-                'Design an automated cryptoTransfer escrow settlement contract',
               ].map((template) => (
                 <button
                   key={template}

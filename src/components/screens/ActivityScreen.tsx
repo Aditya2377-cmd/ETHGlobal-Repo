@@ -196,7 +196,8 @@ export const ActivityScreen: React.FC = () => {
                     {tx.total_tokens.toLocaleString()}
                   </td>
                   <td className="font-mono" style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '15px', padding: '18px 20px' }}>
-                    {tx.charge_hbar.toFixed(6)} ℏ
+                    {tx.charge_hbar.toFixed(8)} ℏ
+                    <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>{tx.charge_tinybars.toLocaleString()} tinybars</div>
                   </td>
                   <td style={{ padding: '18px 20px' }}>
                     <a
