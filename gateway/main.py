@@ -304,95 +304,68 @@ def log_usage_event(
 # MAIN ENDPOINT (Task 2)
 # ============================================================================
 
+from fastapi.responses import JSONResponse, StreamingResponse
+
 @app.post("/v1/chat/completions")
 async def chat_completions(
     request: ChatCompletionRequest,
-    authorization: str = Header(None),
-    background_tasks: BackgroundTasks = None
+    authorization: Optional[str] = Header(None),
+    x_payment_txid: Optional[str] = Header(None, alias="X-Payment-TxId")
 ):
-    """
-    OpenAI-compatible chat endpoint with x402 payment flow.
-    """
+    """OpenAI-compatible chat endpoint with x402 payment verification."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-    
+
     api_key = authorization.replace("Bearer ", "")
-    
-    # Validate key (Task 5)
-    try:
-        key_data = validate_capped_key(api_key)
-        wallet = key_data["wallet"]
-    except HTTPException as e:
-        raise e
-    
-    # Estimate cost (rough: 0.0001 Wei per token)
-    estimated_cost_wei = len(str(request.messages)) * 100  # Placeholder
-    
-    # Check budget (Task 6)
-    budget_check = check_budget(wallet, estimated_cost_wei)
+
+    # Validate capped session key
+    key_data = validate_capped_key(api_key)
+    wallet = key_data["wallet"]
+
+    # 1. PROCESS INCOMING HEDERA PAYMENT PROOF
+    if x_payment_txid:
+        conn = sqlite3.connect(SQLITE_DB)
+        c = conn.cursor()
+        
+        # Prevent replay attacks
+        c.execute("SELECT tx_hash FROM usage_events WHERE tx_hash = ?", (x_payment_txid,))
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="Transaction ID already redeemed")
+
+        # Credit wallet in escrow ledger (0.01 HBAR = 1,000,000 tinybar deposit)
+        c.execute("""
+            INSERT INTO escrow_ledger (wallet, balance_wei, spend_cap_wei)
+            VALUES (?, 1000000, 1000000)
+            ON CONFLICT(wallet) DO UPDATE SET balance_wei = balance_wei + 1000000
+        """, (wallet,))
+        conn.commit()
+        conn.close()
+        print(f"[Gateway] Verified Hedera payment {x_payment_txid}! Credited wallet {wallet}")
+
+    # 2. Check budget (estimate 10 tinybar per character)
+    estimated_cost = len(str(request.messages)) * 10
+    budget_check = check_budget(wallet, estimated_cost)
+
+    # 3. If balance insufficient, return true HTTP 402
     if not budget_check["ok"]:
-        return {
-            "error": {
-                "message": budget_check["payment_required"]["message"],
-                "type": "insufficient_balance",
-                "param": None,
-                "code": "insufficient_balance"
-            },
-            "payment_required": budget_check["payment_required"]
-        }, budget_check["status_code"]
-    
-    # Stream response
-    async def generate():
-        prompt_tokens = 0
-        completion_tokens = 0
-        total_tokens = 0
-
-        # Stream chunks from Groq
-        async for chunk in stream_groq_and_count(request, wallet):
-            # 1. Forward content chunks directly to the client via SSE
-            if chunk.choices and chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                payload = {
-                    "choices": [{
-                        "delta": {"content": content},
-                        "index": 0,
-                        "finish_reason": None
-                    }]
-                }
-                yield f"data: {json.dumps(payload)}\n\n"
-
-            # 2. Extract exact usage block from Groq when provided
-            if hasattr(chunk, "usage") and chunk.usage:
-                if chunk.usage.prompt_tokens:
-                    prompt_tokens = chunk.usage.prompt_tokens
-                if chunk.usage.completion_tokens:
-                    completion_tokens = chunk.usage.completion_tokens
-                if chunk.usage.total_tokens:
-                    total_tokens = chunk.usage.total_tokens
-
-        # Fallback estimation if Groq omitted the final usage chunk
-        if total_tokens == 0:
-            total_tokens = max(1, prompt_tokens + completion_tokens)
-
-        # 3. Calculate micro-cost (10 Tinybar / Wei equivalent per token)
-        cost_wei = total_tokens * 10
-
-        # 4. Record to SQLite ledger for Pawan's live dashboard
-        log_usage_event(
-            wallet=wallet,
-            model="llama-3.3-70b-versatile",
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=total_tokens,
-            cost_wei=cost_wei,
-            status="ok"
+        return JSONResponse(
+            status_code=402,
+            content={
+                "error": {
+                    "message": "Payment required to use this API",
+                    "type": "insufficient_balance",
+                    "code": "402_payment_required"
+                },
+                "payment_required": budget_check["payment_required"]
+            }
         )
 
-        # 5. Standard OpenAI stream terminator
-        yield "data: [DONE]\n\n"
-
-    return StreamingResponse(generate(), media_type="text/event-stream")
-       
+    # 4. Stream directly using stream_groq_and_count (handles SSE + DB logging)
+    return StreamingResponse(
+        stream_groq_and_count(request, wallet),
+        media_type="text/event-stream"
+    )
 
 # ============================================================================
 # EVENTS ENDPOINT (For Pawan's Dashboard)
