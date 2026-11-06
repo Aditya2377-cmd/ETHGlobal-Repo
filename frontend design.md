@@ -114,3 +114,4 @@ Payper provides an instant switcher between two responsive modes:
 * **Unit & Integration Tests**: 20/20 test cases passing via Vitest (`tests/perpay.test.mjs`).
 * **TypeScript Compilation**: `tsc` compiles with 0 errors.
 * **Production Bundle**: Built via Vite (`npm run build`) producing optimized assets in `dist/`.
+
