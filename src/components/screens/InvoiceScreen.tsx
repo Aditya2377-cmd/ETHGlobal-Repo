@@ -24,6 +24,7 @@ export const InvoiceScreen: React.FC = () => {
     currentInvoice,
     userAccount,
     authorizeAndPayCurrentInvoice,
+    verifyOnChainManualTransfer,
     openWalletModal,
     isSettlingPayment,
     settlementStage,
@@ -461,15 +462,25 @@ export const InvoiceScreen: React.FC = () => {
         ) : (
           <div>
             {paymentMethod === 'qr' ? (
-              <button
-                onClick={authorizeAndPayCurrentInvoice}
-                disabled={isSettlingPayment}
-                className="fin-btn fin-btn-primary fin-btn-lg"
-                style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
-              >
-                <CheckCircle2 size={24} />
-                <span>Verify On-Chain Transfer ({(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ)</span>
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={verifyOnChainManualTransfer}
+                  disabled={isSettlingPayment}
+                  className="fin-btn fin-btn-primary fin-btn-lg"
+                  style={{ width: '100%', fontSize: '20px', padding: '18px 28px', border: '2px solid #0F172A', fontWeight: 800 }}
+                >
+                  <CheckCircle2 size={22} />
+                  <span>Verify On-Chain Transfer on Mirror Node ({(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ)</span>
+                </button>
+                <button
+                  onClick={authorizeAndPayCurrentInvoice}
+                  disabled={isSettlingPayment}
+                  className="fin-btn fin-btn-secondary"
+                  style={{ width: '100%', fontSize: '15px', padding: '12px 20px', border: '1.5px solid #64748B', fontWeight: 700 }}
+                >
+                  <span>Instant Consensus Settle (Automatic Testnet Receipt)</span>
+                </button>
+              </div>
             ) : !userAccount?.connected_wallet ? (
               <button
                 onClick={openWalletModal}

@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, ShieldCheck, ExternalLink, Wallet, CheckCircle2 } from 'lucide-react';
+import { apiClient } from '../../services/api';
+import { X, ShieldCheck, ExternalLink, Wallet, CheckCircle2, Key, Info } from 'lucide-react';
 
 export const WalletModal: React.FC = () => {
   const { isWalletModalOpen, closeWalletModal, connectWallet, userAccount } = useApp();
   const [customAccountId, setCustomAccountId] = useState('0.0.4829103');
+  const [customPrivateKey, setCustomPrivateKey] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'HashPack' | 'Blade' | 'HederaTestnetDirect'>('HashPack');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [hasExtension, setHasExtension] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !!(window as any).ethereum) {
+      setHasExtension(true);
+    }
+    const savedKey = apiClient.getHederaPrivateKey();
+    if (savedKey) setCustomPrivateKey(savedKey);
+  }, [isWalletModalOpen]);
 
   if (!isWalletModalOpen) return null;
 
@@ -14,12 +25,30 @@ export const WalletModal: React.FC = () => {
     setIsConnecting(true);
     setSelectedProvider(provider);
 
-    // Simulate standard wallet pairing handshake
-    setTimeout(async () => {
-      const accountId = customAccountId.trim() || '0.0.4829103';
-      await connectWallet(accountId, provider);
-      setIsConnecting(false);
-    }, 600);
+    // If browser extension (HashPack / Blade EVM) is available, prompt real connection
+    if (hasExtension && (provider === 'HashPack' || provider === 'Blade')) {
+      try {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+          const accountId = accounts[0];
+          await connectWallet(accountId, provider);
+          setIsConnecting(false);
+          closeWalletModal();
+          return;
+        }
+      } catch (err) {
+        console.warn('Wallet extension pairing request rejected or failed:', err);
+      }
+    }
+
+    // Direct account connection
+    const accountId = customAccountId.trim() || '0.0.4829103';
+    if (customPrivateKey.trim()) {
+      apiClient.setHederaPrivateKey(customPrivateKey.trim());
+    }
+    await connectWallet(accountId, provider);
+    setIsConnecting(false);
+    closeWalletModal();
   };
 
   return (
@@ -176,9 +205,9 @@ export const WalletModal: React.FC = () => {
         {/* Hedera Testnet Account Input */}
         <div style={{ borderTop: '2px solid #E2E8F0', paddingTop: '20px' }}>
           <label style={{ display: 'block', fontSize: '14px', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
-            OR SPECIFY HEDERA TESTNET ACCOUNT ID (0.0.X)
+            HEDERA TESTNET ACCOUNT ID (0.0.X)
           </label>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
             <input
               type="text"
               className="fin-input fin-input-mono"
@@ -196,9 +225,37 @@ export const WalletModal: React.FC = () => {
               {isConnecting ? 'Authorizing...' : 'Set Active'}
             </button>
           </div>
-          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+            OPTIONAL TESTNET PRIVATE KEY (FOR AUTOMATED ON-CHAIN SIGNING)
+          </label>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <input
+              type="password"
+              className="fin-input fin-input-mono"
+              placeholder="302e... or hex private key (saved locally in browser)"
+              value={customPrivateKey}
+              onChange={(e) => setCustomPrivateKey(e.target.value)}
+              style={{ fontSize: '14px', padding: '10px 14px', border: '1.5px solid #CBD5E1' }}
+            />
+            {customPrivateKey && (
+              <button
+                type="button"
+                onClick={() => {
+                  apiClient.setHederaPrivateKey(customPrivateKey.trim());
+                  alert('Testnet private key saved in secure local browser storage.');
+                }}
+                className="fin-btn fin-btn-secondary fin-btn-sm"
+                style={{ whiteSpace: 'nowrap', border: '1.5px solid #0F172A' }}
+              >
+                Save Key
+              </button>
+            )}
+          </div>
+
+          <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
-              Network: hedera:testnet
+              Network: hedera:testnet {hasExtension ? '• Web3 Extension Detected' : ''}
             </span>
             <a
               href="https://portal.hedera.com"

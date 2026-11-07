@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AVAILABLE_MODELS } from '../../services/models';
+import { apiClient } from '../../services/api';
 import {
   User,
   Wallet,
@@ -11,10 +12,54 @@ import {
   CheckCircle2,
   Server,
   Layers,
+  Zap,
+  Key,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 
 export const SettingsScreen: React.FC = () => {
-  const { userAccount, openWalletModal, disconnectWallet, isBackendLive, viewInvoice } = useApp();
+  const {
+    userAccount,
+    openWalletModal,
+    disconnectWallet,
+    isBackendLive,
+    viewInvoice,
+    groqApiKey,
+    updateGroqApiKey,
+    refreshAccount,
+  } = useApp();
+
+  const [groqInput, setGroqInput] = useState(groqApiKey);
+  const [isTestingGroq, setIsTestingGroq] = useState(false);
+  const [groqFeedback, setGroqFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleSaveGroqKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsTestingGroq(true);
+    setGroqFeedback(null);
+    try {
+      const res = await updateGroqApiKey(groqInput.trim());
+      if (res.valid) {
+        setGroqFeedback({
+          success: true,
+          message: groqInput.trim() ? 'Groq API Key verified & connected successfully!' : 'Groq key removed. Using built-in engine.',
+        });
+      } else {
+        setGroqFeedback({
+          success: false,
+          message: res.error || 'Failed to validate Groq key.',
+        });
+      }
+    } catch (err: any) {
+      setGroqFeedback({
+        success: false,
+        message: err.message || 'Error connecting to Groq API.',
+      });
+    } finally {
+      setIsTestingGroq(false);
+    }
+  };
 
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 24px 80px 24px' }}>
@@ -129,6 +174,199 @@ export const SettingsScreen: React.FC = () => {
                 </span>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Groq Cloud AI Engine Configuration Card */}
+      <div className="fin-card" style={{ padding: '32px', marginBottom: '28px', backgroundColor: '#FFFFFF', border: '2px solid #0F172A' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #0F172A', paddingBottom: '20px', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: '#FEF3C7',
+                border: '2px solid #B45309',
+                color: '#B45309',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Zap size={24} />
+            </div>
+            <div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>
+                Groq Cloud LPU Engine Direct Access
+              </div>
+              <div style={{ fontSize: '14px', color: '#64748B', marginTop: '2px' }}>
+                Route all workspace questions directly to Groq's high-speed cloud inference (Llama 3.3 70B &amp; Mixtral)
+              </div>
+            </div>
+          </div>
+
+          <div>
+            {groqApiKey ? (
+              <span className="fin-badge fin-badge-success" style={{ fontSize: '15px', padding: '6px 16px', border: '1.5px solid #16A34A' }}>
+                <CheckCircle2 size={16} />
+                CONNECTED TO GROQ CLOUD
+              </span>
+            ) : (
+              <span className="fin-badge fin-badge-warning" style={{ fontSize: '15px', padding: '6px 16px', border: '1.5px solid #D97706' }}>
+                STANDBY (BUILT-IN ENGINE)
+              </span>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveGroqKey} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '15px', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+              Groq Cloud API Key (gsk_...)
+            </label>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <input
+                type="password"
+                placeholder="Enter Groq API Key (gsk_...)"
+                value={groqInput}
+                onChange={(e) => setGroqInput(e.target.value)}
+                className="fin-input font-mono"
+                style={{
+                  flex: '1 1 320px',
+                  fontSize: '16px',
+                  padding: '14px 18px',
+                  border: '2px solid #0F172A',
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isTestingGroq}
+                className="fin-btn fin-btn-primary"
+                style={{ fontSize: '16px', padding: '14px 24px', border: '2px solid #0F172A', fontWeight: 800 }}
+              >
+                {isTestingGroq ? (
+                  <>
+                    <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span>Testing Key...</span>
+                  </>
+                ) : (
+                  <>
+                    <Key size={18} />
+                    <span>Save &amp; Validate Key</span>
+                  </>
+                )}
+              </button>
+              {groqApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGroqInput('');
+                    updateGroqApiKey('');
+                  }}
+                  className="fin-btn fin-btn-secondary"
+                  style={{ fontSize: '15px', padding: '14px 18px', border: '2px solid #0F172A' }}
+                  title="Remove Key"
+                >
+                  <Trash2 size={18} />
+                  <span>Remove</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {groqFeedback && (
+            <div
+              style={{
+                padding: '12px 18px',
+                border: '1.5px solid',
+                borderColor: groqFeedback.success ? '#16A34A' : '#DC2626',
+                backgroundColor: groqFeedback.success ? '#DCFCE7' : '#FEE2E2',
+                color: groqFeedback.success ? '#14532D' : '#991B1B',
+                fontSize: '15px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {groqFeedback.success ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              <span>{groqFeedback.message}</span>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', fontSize: '14px', color: '#475569', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
+            <span>
+              Don't have a Groq key? Free keys with instant rate limits are available at the Groq Console.
+            </span>
+            <a
+              href="https://console.groq.com/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fin-btn fin-btn-secondary fin-btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1.5px solid #0F172A', fontWeight: 700 }}
+            >
+              <span>Get Free Groq API Key</span>
+              <ExternalLink size={14} />
+            </a>
+          </div>
+        </form>
+      </div>
+
+      {/* Hedera Testnet Real On-Chain Settlement Card */}
+      <div className="fin-card" style={{ padding: '32px', marginBottom: '28px', backgroundColor: '#FFFFFF', border: '2px solid #0F172A' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #0F172A', paddingBottom: '20px', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: '#EFF6FF',
+                border: '2px solid #1D4ED8',
+                color: '#1D4ED8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Shield size={24} />
+            </div>
+            <div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A' }}>
+                Hedera Testnet Settlement &amp; Real-Time Balance
+              </div>
+              <div style={{ fontSize: '14px', color: '#64748B', marginTop: '2px' }}>
+                Every transaction settles via Hedera Consensus Service and generates an authentic HashScan receipt
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => refreshAccount()}
+            className="fin-btn fin-btn-secondary fin-btn-sm"
+            style={{ fontSize: '14px', border: '1.5px solid #0F172A', fontWeight: 700 }}
+          >
+            Refresh On-Chain Balance
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', fontSize: '15px' }}>
+          <div style={{ padding: '16px', backgroundColor: '#F8FAFC', border: '1.5px solid #CBD5E1' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
+              Option 1: Wallet Extension (HashPack / Blade / MetaMask)
+            </div>
+            <p style={{ fontSize: '14px', color: '#334155', marginTop: '6px', lineHeight: 1.5 }}>
+              Connect your HashPack or Blade extension. When settling an invoice, the wallet extension automatically prompts you to sign a real <code className="font-mono">cryptoTransfer</code> to the Treasury account, deducting real HBAR from your balance.
+            </p>
+          </div>
+
+          <div style={{ padding: '16px', backgroundColor: '#F8FAFC', border: '1.5px solid #CBD5E1' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
+              Option 2: Mobile QR Transfer &amp; Mirror Node Verification
+            </div>
+            <p style={{ fontSize: '14px', color: '#334155', marginTop: '6px', lineHeight: 1.5 }}>
+              Scan the QR code in your mobile wallet app, send HBAR with the exact invoice ID in the memo, and click <strong>Verify On-Chain Transfer</strong>. The system verifies receipt on the Hedera Mirror Node.
+            </p>
           </div>
         </div>
       </div>

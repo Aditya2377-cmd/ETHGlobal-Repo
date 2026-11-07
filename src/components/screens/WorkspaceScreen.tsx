@@ -10,10 +10,14 @@ import {
   HelpCircle,
   Cpu,
   Layers,
+  Zap,
+  Key,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 
 export const WorkspaceScreen: React.FC = () => {
-  const { userAccount, submitPrompt, viewInvoice, openWalletModal } = useApp();
+  const { userAccount, submitPrompt, viewInvoice, openWalletModal, groqApiKey, navigateTo } = useApp();
   const [prompt, setPrompt] = useState('');
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
   const [maxTokens, setMaxTokens] = useState(1024);
@@ -140,6 +144,53 @@ export const WorkspaceScreen: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Groq Cloud Connection Status Banner */}
+      <div
+        style={{
+          marginBottom: '24px',
+          padding: '16px 20px',
+          backgroundColor: groqApiKey ? '#DCFCE7' : '#EFF6FF',
+          border: '2px solid',
+          borderColor: groqApiKey ? '#16A34A' : '#1D4ED8',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Zap size={22} color={groqApiKey ? '#15803D' : '#1D4ED8'} />
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: groqApiKey ? '#14532D' : '#1E40AF' }}>
+              {groqApiKey
+                ? 'Groq Cloud Engine: Direct LPU Cloud Inference Active'
+                : 'Groq Cloud Engine: Built-in Knowledge Synthesizer Active'}
+            </div>
+            <div style={{ fontSize: '13px', color: groqApiKey ? '#166534' : '#3B82F6', marginTop: '2px' }}>
+              {groqApiKey
+                ? 'Prompts are sent directly to Groq API (Llama 3.3 70B & Mixtral) with authentic token metering.'
+                : 'Connect your Groq API key (gsk_...) in Settings to query Groq Cloud live 1:1.'}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigateTo('settings')}
+          className="fin-btn fin-btn-secondary fin-btn-sm"
+          style={{
+            fontSize: '14px',
+            border: '1.5px solid #0F172A',
+            fontWeight: 700,
+            padding: '6px 14px',
+            backgroundColor: '#FFFFFF',
+          }}
+        >
+          {groqApiKey ? 'Manage Groq Key' : 'Configure Groq Key'}
+        </button>
+      </div>
 
       {/* Workspace Form */}
       <form onSubmit={handleSubmit} className="fin-card" style={{ padding: '36px', marginBottom: '32px', border: '2px solid #0F172A' }}>

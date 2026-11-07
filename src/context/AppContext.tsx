@@ -27,6 +27,8 @@ interface AppContextType {
   togglePaletteMode: () => void;
   appViewMode: 'dashboard' | 'mobile_preview';
   toggleAppViewMode: () => void;
+  groqApiKey: string;
+  updateGroqApiKey: (key: string) => Promise<{ valid: boolean; error?: string }>;
 
   // Navigation & Actions
   navigateTo: (screen: ActiveScreen) => void;
@@ -36,6 +38,7 @@ interface AppContextType {
   disconnectWallet: () => Promise<void>;
   submitPrompt: (prompt: string, modelId?: string, maxTokens?: number) => Promise<void>;
   authorizeAndPayCurrentInvoice: () => Promise<void>;
+  verifyOnChainManualTransfer: () => Promise<void>;
   viewInvoice: (invoiceId: string) => Promise<void>;
   viewResponse: (generationId: string) => Promise<void>;
   refreshAccount: () => Promise<void>;
@@ -59,6 +62,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [settlementError, setSettlementError] = useState<string | null>(null);
   const [paletteMode, setPaletteMode] = useState<'spectrum' | 'perpay' | 'codepen'>('spectrum');
   const [appViewMode, setAppViewMode] = useState<'dashboard' | 'mobile_preview'>('dashboard');
+  const [groqApiKey, setGroqApiKeyState] = useState<string>(() => apiClient.getGroqApiKey());
+
+  const updateGroqApiKey = async (key: string): Promise<{ valid: boolean; error?: string }> => {
+    if (!key.trim()) {
+      apiClient.setGroqApiKey('');
+      setGroqApiKeyState('');
+      return { valid: true };
+    }
+    const res = await apiClient.validateGroqApiKey(key);
+    if (res.valid) {
+      apiClient.setGroqApiKey(key);
+      setGroqApiKeyState(key);
+    }
+    return res;
+  };
 
   const toggleAppViewMode = () => {
     setAppViewMode((prev) => (prev === 'dashboard' ? 'mobile_preview' : 'dashboard'));
@@ -259,6 +277,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const verifyOnChainManualTransfer = async () => {
+    if (!currentInvoice) return;
+    try {
+      setIsSettlingPayment(true);
+      setSettlementError(null);
+      setSettlementStage('Querying Hedera Mirror Node for confirmed on-chain transfer...');
+
+      const payer = userAccount?.connected_wallet || '0.0.4829103';
+      const result = await apiClient.verifyOnChainPayment(currentInvoice.invoice_id, payer);
+
+      await refreshAccount();
+      await refreshTransactions();
+
+      const unlocked = await apiClient.getResponse(result.generation_id);
+      if (unlocked?.response) {
+        setCurrentUnlockedResponse(unlocked.response);
+        navigateTo('unlocked_response');
+      } else {
+        navigateTo('activity');
+      }
+    } catch (err: any) {
+      console.error('Mirror node verification error:', err);
+      setSettlementError(err.message || 'On-chain transfer not found yet.');
+    } finally {
+      setIsSettlingPayment(false);
+      setSettlementStage(null);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -278,6 +325,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         togglePaletteMode,
         appViewMode,
         toggleAppViewMode,
+        groqApiKey,
+        updateGroqApiKey,
         navigateTo,
         openWalletModal,
         closeWalletModal,
@@ -285,6 +334,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         disconnectWallet,
         submitPrompt,
         authorizeAndPayCurrentInvoice,
+        verifyOnChainManualTransfer,
         viewInvoice,
         viewResponse,
         refreshAccount,
