@@ -43,3 +43,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 
 # Start x402 service
 CMD ["sh", "-c", "exec node --experimental-sqlite dist/index.js"]
+

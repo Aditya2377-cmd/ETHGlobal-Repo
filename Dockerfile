@@ -22,3 +22,4 @@ COPY frontend-design/nginx.conf /etc/nginx/conf.d/default.conf
 ENV PORT=8080
 
 CMD ["sh", "-c", "sed -i 's/listen       8080;/listen       '\"${PORT:-8080}\"';/g' /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+

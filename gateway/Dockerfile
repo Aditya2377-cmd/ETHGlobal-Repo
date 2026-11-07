@@ -33,3 +33,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 
 # Start Uvicorn bound to 0.0.0.0 and dynamic Cloud Run $PORT
 CMD ["sh", "-c", "exec uvicorn gateway.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+

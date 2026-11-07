@@ -197,3 +197,4 @@ gcloud run services update-traffic perpay-frontend \
     --to-revisions=perpay-frontend-00001-abc=100 \
     --region asia-south1
 ```
+
