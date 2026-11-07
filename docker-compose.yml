@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: perpay-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-perpay-internal-secret-2026}
+      - HEDERA_NETWORK=testnet
+      - HEDERA_RECEIVER_ACCOUNT_ID=${HEDERA_RECEIVER_ACCOUNT_ID:-0.0.5109822}
+    volumes:
+      - gateway_data:/app/gateway/data
+    restart: unless-stopped
+
+  x402-service:
+    build:
+      context: .
+      dockerfile: x402-service/Dockerfile
+    container_name: perpay-x402
+    ports:
+      - "4020:4020"
+    environment:
+      - PORT=4020
+      - HEDERA_NETWORK=testnet
+      - HEDERA_RECEIVER_ACCOUNT_ID=${HEDERA_RECEIVER_ACCOUNT_ID:-0.0.5109822}
+      - FACILITATOR_URL=https://x402.org/facilitator
+      - HEDERA_MIRROR_NODE_URL=https://testnet.mirrornode.hedera.com
+      - FASTAPI_GATEWAY_URL=http://gateway:8000
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-perpay-internal-secret-2026}
+    depends_on:
+      - gateway
+    volumes:
+      - x402_data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-design/Dockerfile
+    container_name: perpay-frontend
+    ports:
+      - "3000:8080"
+    environment:
+      - PORT=8080
+      - VITE_GATEWAY_URL=http://localhost:8000
+      - VITE_X402_FACILITATOR_URL=http://localhost:4020
+      - VITE_PERPAY_TREASURY_ACCOUNT=${HEDERA_RECEIVER_ACCOUNT_ID:-0.0.5109822}
+    depends_on:
+      - gateway
+      - x402-service
+    restart: unless-stopped
+
+volumes:
+  gateway_data:
+  x402_data:
