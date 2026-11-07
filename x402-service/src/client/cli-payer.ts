@@ -38,7 +38,10 @@ export async function runCliPayer(): Promise<void> {
     try {
       initialResp = await fetch(targetUrl, {
         method: "GET",
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+          "x-internal-secret": process.env.INTERNAL_SERVICE_SECRET || "demo_secret_123",
+        },
         signal: AbortSignal.timeout(6000),
       });
     } catch (err: unknown) {
@@ -108,10 +111,11 @@ export async function runCliPayer(): Promise<void> {
 
     const approval = await ask(
       rl,
-      `\nAUTHORIZE PAYMENT: Transfer ${amountTinybars.toString()} tinybars to ${accept.payTo}? [yes/no]: `
+      `\nAUTHORIZE PAYMENT: Transfer ${amountTinybars.toString()} tinybars to ${accept.payTo}? [yes/confirm]: `
     );
 
-    if (approval.trim().toLowerCase() !== "yes") {
+    const val = approval.trim().toLowerCase();
+    if (val !== "yes" && val !== "confirm") {
       console.log("\nPayment canceled by user.");
       return;
     }
@@ -148,6 +152,7 @@ export async function runCliPayer(): Promise<void> {
         method: "GET",
         headers: {
           Accept: "application/json",
+          "x-internal-secret": process.env.INTERNAL_SERVICE_SECRET || "demo_secret_123",
           [HTTP_HEADER_PAYMENT_SIGNATURE]: signatureHeader,
         },
       });
