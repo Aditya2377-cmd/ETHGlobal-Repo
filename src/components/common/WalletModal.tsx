@@ -5,19 +5,23 @@ import { X, ShieldCheck, ExternalLink, Wallet, CheckCircle2, Key, Info } from 'l
 
 export const WalletModal: React.FC = () => {
   const { isWalletModalOpen, closeWalletModal, connectWallet, userAccount } = useApp();
-  const [customAccountId, setCustomAccountId] = useState('0.0.4829103');
+  const [customAccountId, setCustomAccountId] = useState(userAccount?.connected_wallet || '0.0.11347797');
   const [customPrivateKey, setCustomPrivateKey] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<'HashPack' | 'Blade' | 'HederaTestnetDirect'>('HashPack');
+  const [selectedProvider, setSelectedProvider] = useState<'HashPack' | 'Blade' | 'HederaTestnetDirect'>('HederaTestnetDirect');
   const [isConnecting, setIsConnecting] = useState(false);
   const [hasExtension, setHasExtension] = useState(false);
+  const [savedKeyFeedback, setSavedKeyFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !!(window as any).ethereum) {
       setHasExtension(true);
     }
+    if (userAccount?.connected_wallet) {
+      setCustomAccountId(userAccount.connected_wallet);
+    }
     const savedKey = apiClient.getHederaPrivateKey();
     if (savedKey) setCustomPrivateKey(savedKey);
-  }, [isWalletModalOpen]);
+  }, [isWalletModalOpen, userAccount]);
 
   if (!isWalletModalOpen) return null;
 
@@ -226,30 +230,45 @@ export const WalletModal: React.FC = () => {
             </button>
           </div>
 
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-            OPTIONAL TESTNET PRIVATE KEY (FOR AUTOMATED ON-CHAIN SIGNING)
-          </label>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-            <input
-              type="password"
-              className="fin-input fin-input-mono"
-              placeholder="302e... or hex private key (saved locally in browser)"
-              value={customPrivateKey}
-              onChange={(e) => setCustomPrivateKey(e.target.value)}
-              style={{ fontSize: '14px', padding: '10px 14px', border: '1.5px solid #CBD5E1' }}
-            />
-            {customPrivateKey && (
+          <div style={{ backgroundColor: '#F8FAFC', padding: '16px', border: '1.5px solid #CBD5E1', marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
+              HEX ENCODED PRIVATE KEY (FROM PORTAL.HEDERA.COM)
+            </label>
+            <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '10px', lineHeight: 1.4 }}>
+              To deduct real HBAR from your Hedera Developer Portal account, copy the <strong>HEX Encoded Private Key</strong> (<code className="font-mono">0x...</code>) from your portal dashboard and paste it here. Payper uses this key to sign and broadcast authentic on-chain transactions directly to Hedera Testnet.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="password"
+                className="fin-input fin-input-mono"
+                placeholder="0x0360e917... (from Hedera Developer Portal)"
+                value={customPrivateKey}
+                onChange={(e) => setCustomPrivateKey(e.target.value)}
+                style={{ fontSize: '14px', padding: '10px 14px', border: '1.5px solid #0F172A', flex: 1 }}
+              />
               <button
                 type="button"
                 onClick={() => {
-                  apiClient.setHederaPrivateKey(customPrivateKey.trim());
-                  alert('Testnet private key saved in secure local browser storage.');
+                  if (!customPrivateKey.trim()) {
+                    apiClient.setHederaPrivateKey('');
+                    setSavedKeyFeedback('Private key removed.');
+                  } else {
+                    apiClient.setHederaPrivateKey(customPrivateKey.trim());
+                    setSavedKeyFeedback('Key linked! Real HBAR will cut on-chain from portal.');
+                  }
+                  setTimeout(() => setSavedKeyFeedback(null), 3500);
                 }}
-                className="fin-btn fin-btn-secondary fin-btn-sm"
-                style={{ whiteSpace: 'nowrap', border: '1.5px solid #0F172A' }}
+                className="fin-btn fin-btn-secondary"
+                style={{ whiteSpace: 'nowrap', border: '1.5px solid #0F172A', fontWeight: 700, fontSize: '14px' }}
               >
                 Save Key
               </button>
+            </div>
+            {savedKeyFeedback && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: '#15803D', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={14} color="#15803D" />
+                <span>{savedKeyFeedback}</span>
+              </div>
             )}
           </div>
 

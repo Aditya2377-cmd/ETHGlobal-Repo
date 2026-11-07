@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { apiClient } from '../../services/api';
 import { QRCode } from '../common/QRCode';
 import {
   FileText,
@@ -17,6 +18,7 @@ import {
   QrCode,
   Copy,
   Check,
+  Key,
 } from 'lucide-react';
 
 export const InvoiceScreen: React.FC = () => {
@@ -36,6 +38,22 @@ export const InvoiceScreen: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'qr'>('wallet');
   const [copiedMemo, setCopiedMemo] = useState(false);
   const [copiedUri, setCopiedUri] = useState(false);
+  const [portalKeyInput, setPortalKeyInput] = useState(apiClient.getHederaPrivateKey());
+  const [isPortalKeySaved, setIsPortalKeySaved] = useState(!!apiClient.getHederaPrivateKey());
+  const [portalKeyMessage, setPortalKeyMessage] = useState<string | null>(null);
+
+  const handleSavePortalKey = () => {
+    if (!portalKeyInput.trim()) {
+      apiClient.setHederaPrivateKey('');
+      setIsPortalKeySaved(false);
+      setPortalKeyMessage('Key removed. Transactions will run in consensus simulation.');
+    } else {
+      apiClient.setHederaPrivateKey(portalKeyInput.trim());
+      setIsPortalKeySaved(true);
+      setPortalKeyMessage('ECDSA Key linked! Transactions will execute on-chain and cut real HBAR from portal.hedera.com.');
+    }
+    setTimeout(() => setPortalKeyMessage(null), 4000);
+  };
 
   if (!currentInvoice) {
     return (
@@ -491,15 +509,100 @@ export const InvoiceScreen: React.FC = () => {
                 <span>Connect Wallet to Authorize Payment</span>
               </button>
             ) : (
-              <button
-                onClick={authorizeAndPayCurrentInvoice}
-                disabled={isSettlingPayment}
-                className="fin-btn fin-btn-primary fin-btn-lg"
-                style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
-              >
-                <CheckCircle2 size={24} />
-                <span>Authorize & Pay {(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ via x402</span>
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Hedera Developer Portal Key Card */}
+                <div
+                  style={{
+                    backgroundColor: isPortalKeySaved ? '#F0FDF4' : '#FEF3C7',
+                    border: '2px solid',
+                    borderColor: isPortalKeySaved ? '#15803D' : '#D97706',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: '15px', color: isPortalKeySaved ? '#14532D' : '#92400E' }}>
+                      <Key size={18} color={isPortalKeySaved ? '#15803D' : '#D97706'} />
+                      <span>{isPortalKeySaved ? 'Hedera Portal ECDSA Key Linked (Real On-Chain Deductions)' : 'Direct Deduction from portal.hedera.com'}</span>
+                    </div>
+                    <span
+                      className="fin-badge"
+                      style={{
+                        fontSize: '12px',
+                        backgroundColor: isPortalKeySaved ? '#DCFCE7' : '#FEF3C7',
+                        color: isPortalKeySaved ? '#14532D' : '#92400E',
+                        border: '1.5px solid currentColor',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {isPortalKeySaved ? '● ON-CHAIN ACTIVE' : 'KEY REQUIRED FOR PORTAL'}
+                    </span>
+                  </div>
+
+                  {!isPortalKeySaved ? (
+                    <div>
+                      <p style={{ fontSize: '13px', color: '#78350F', lineHeight: 1.5, marginBottom: '12px' }}>
+                        To cut real HBAR from your <strong>portal.hedera.com</strong> account (<strong>{userAccount?.connected_wallet || '0.0.11347797'}</strong>), paste your <strong>HEX Encoded Private Key</strong> (<code className="font-mono">0x...</code>) from your portal dashboard. Payper signs and broadcasts the cryptoTransfer directly to Hedera Testnet.
+                      </p>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                          type="password"
+                          className="fin-input fin-input-mono"
+                          placeholder="0x0360e917... (from portal.hedera.com dashboard)"
+                          value={portalKeyInput}
+                          onChange={(e) => setPortalKeyInput(e.target.value)}
+                          style={{ fontSize: '14px', padding: '10px 14px', border: '1.5px solid #0F172A', flex: 1, backgroundColor: '#FFFFFF' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSavePortalKey}
+                          className="fin-btn fin-btn-primary"
+                          style={{ whiteSpace: 'nowrap', border: '1.5px solid #0F172A', fontWeight: 800, fontSize: '14px' }}
+                        >
+                          Link Key &amp; Enable Real Cut
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ fontSize: '13px', color: '#166534', lineHeight: 1.4 }}>
+                        Every authorization broadcasts directly to Hedera Testnet consensus via JSON-RPC, transferring real HBAR from account <strong>{userAccount?.connected_wallet || '0.0.11347797'}</strong> to Treasury.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          apiClient.setHederaPrivateKey('');
+                          setPortalKeyInput('');
+                          setIsPortalKeySaved(false);
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#DC2626', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                      >
+                        Unlink Key
+                      </button>
+                    </div>
+                  )}
+
+                  {portalKeyMessage && (
+                    <div style={{ marginTop: '10px', fontSize: '13px', color: isPortalKeySaved ? '#15803D' : '#B45309', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={15} />
+                      <span>{portalKeyMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={authorizeAndPayCurrentInvoice}
+                  disabled={isSettlingPayment}
+                  className="fin-btn fin-btn-primary fin-btn-lg"
+                  style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
+                >
+                  <CheckCircle2 size={24} />
+                  <span>
+                    {isPortalKeySaved
+                      ? `Authorize & Deduct On-Chain (${(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ)`
+                      : `Authorize & Pay ${(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ via x402`}
+                  </span>
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -368,6 +368,15 @@ export const SettingsScreen: React.FC = () => {
               Scan the QR code in your mobile wallet app, send HBAR with the exact invoice ID in the memo, and click <strong>Verify On-Chain Transfer</strong>. The system verifies receipt on the Hedera Mirror Node.
             </p>
           </div>
+
+          <div style={{ padding: '16px', backgroundColor: '#F8FAFC', border: '1.5px solid #CBD5E1' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>
+              Option 3: Direct Portal Key On-Chain Signing
+            </div>
+            <p style={{ fontSize: '14px', color: '#334155', marginTop: '6px', lineHeight: 1.5 }}>
+              Paste your <strong>HEX Encoded Private Key</strong> from your Hedera Portal dashboard (<code className="font-mono">portal.hedera.com</code>) into the Connect Wallet modal. Payper automatically broadcasts real signed transactions directly to Hedera Testnet, cutting real HBAR from your portal balance.
+            </p>
+          </div>
         </div>
       </div>
 
