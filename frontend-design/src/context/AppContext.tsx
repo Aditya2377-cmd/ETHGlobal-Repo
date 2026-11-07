@@ -148,6 +148,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         max_output_tokens: maxTokens,
       });
 
+      if (!res?.generation_id) {
+        throw new Error('Invalid generation response received from AI Gateway.');
+      }
+
       setCurrentGenerationId(res.generation_id);
 
       // Poll real-time progress through the 5 actual stages
@@ -158,19 +162,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentProgress(progress);
 
       // Fetch invoice ready for payment
-      if (progress.invoice_id) {
+      if (progress?.invoice_id) {
         const inv = await apiClient.getInvoice(progress.invoice_id);
         setCurrentInvoice(inv);
         await refreshAccount();
         navigateTo('invoice');
+      } else {
+        throw new Error('Generation completed but invoice could not be issued.');
       }
     } catch (err: any) {
-      alert(err?.message || 'Failed to submit generation');
+      console.error('[PerPay] Prompt submission failed:', err);
       if (userAccount?.has_unpaid_invoice && userAccount.unpaid_invoice_id) {
-        viewInvoice(userAccount.unpaid_invoice_id);
+        await viewInvoice(userAccount.unpaid_invoice_id);
       } else {
         navigateTo('workspace');
       }
+      // Re-throw so WorkspaceScreen can display it in the UI error state banner
+      throw err;
     }
   };
 
@@ -180,7 +188,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentInvoice(inv);
       navigateTo('invoice');
     } catch (err: any) {
-      alert(err?.message || 'Invoice not found');
+      console.error('Invoice retrieval failed:', err);
+      navigateTo('workspace');
     }
   };
 
@@ -193,13 +202,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       } else if (res.status === 402) {
         // If unpaid, direct to invoice
         if (userAccount?.unpaid_invoice_id) {
-          viewInvoice(userAccount.unpaid_invoice_id);
+          await viewInvoice(userAccount.unpaid_invoice_id);
         } else {
-          alert('HTTP 402: Payment required to unlock this AI generation response.');
+          navigateTo('workspace');
         }
       }
     } catch (err: any) {
-      alert(err?.message || 'Failed to retrieve response');
+      console.error('Failed to retrieve response:', err);
+      navigateTo('workspace');
     }
   };
 
@@ -220,26 +230,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         (stage) => setSettlementStage(stage)
       );
 
-      // Refresh account and records
-      await refreshAccount();
-      await refreshTransactions();
+      // Refresh account and records safely
+      try {
+        await refreshAccount();
+        await refreshTransactions();
+      } catch (refErr) {
+        console.warn('Account refresh failed after settlement:', refErr);
+      }
 
       // Fetch newly unlocked response
       const unlocked = await apiClient.getResponse(result.generation_id);
-      if (unlocked.response) {
+      if (unlocked?.response) {
         setCurrentUnlockedResponse(unlocked.response);
-        setIsSettlingPayment(false);
-        setSettlementStage(null);
         navigateTo('unlocked_response');
       } else {
-        setIsSettlingPayment(false);
-        setSettlementStage(null);
         navigateTo('activity');
       }
     } catch (err: any) {
+      console.error('Hedera payment transaction error:', err);
+      const isRejection = /reject|denied|cancel|user declined/i.test(err?.message || '');
+      const formattedError = isRejection
+        ? 'Hedera transaction was rejected by wallet. No funds were transferred.'
+        : (err?.message || 'Payment settlement failed. Please verify your Hedera account balance and network connectivity.');
+      setSettlementError(formattedError);
+    } finally {
       setIsSettlingPayment(false);
       setSettlementStage(null);
-      setSettlementError(err?.message || 'Payment settlement failed. Please try again.');
     }
   };
 

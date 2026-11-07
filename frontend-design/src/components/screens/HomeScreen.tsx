@@ -216,7 +216,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Model Chips */}
         <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '6px' }}>
-          {AVAILABLE_MODELS.map((m) => {
+          {(AVAILABLE_MODELS || []).map((m) => {
             const isSelected = m.id === quickModelId;
             return (
               <button
@@ -390,7 +390,7 @@ export const HomeScreen: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {transactions.slice(0, 5).map((tx) => (
+              {(transactions || []).slice(0, 5).map((tx) => (
                 <tr key={tx.event_id} style={{ borderBottom: '1px solid #CBD5E1' }}>
                   <td style={{ padding: '18px 20px' }}>
                     <span className="fin-badge fin-badge-success" style={{ fontSize: '14px', border: '1.5px solid #86EFAC' }}>

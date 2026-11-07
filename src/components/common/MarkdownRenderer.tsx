@@ -6,7 +6,7 @@ interface MarkdownRendererProps {
   style?: React.CSSProperties;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, style }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content = '', style }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCopyCode = (codeText: string, index: number) => {
@@ -17,15 +17,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, sty
 
   // Helper to parse inline styles: bold, italic, code
   const renderInlineFormatted = (text: string): React.ReactNode[] => {
+    const safeText = typeof text === 'string' ? text : String(text || '');
     // Regex matching inline tokens: `code`, **bold**, *italic*
     const parts: React.ReactNode[] = [];
     const tokenRegex = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
 
-    while ((match = tokenRegex.exec(text)) !== null) {
+    while ((match = tokenRegex.exec(safeText)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
+        parts.push(safeText.substring(lastIndex, match.index));
       }
 
       const token = match[0];
@@ -62,15 +63,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, sty
       lastIndex = tokenRegex.lastIndex;
     }
 
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
+    if (lastIndex < safeText.length) {
+      parts.push(safeText.substring(lastIndex));
     }
 
     return parts;
   };
 
-  // Parse markdown into blocks
-  const lines = content.split('\n');
+  // Parse markdown into blocks safely
+  const safeContent = typeof content === 'string' ? content : (content ? String(content) : '');
+  const lines = safeContent.split('\n');
   const elements: React.ReactNode[] = [];
 
   let inCodeBlock = false;
@@ -94,7 +96,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, sty
           color: '#0F172A',
         }}
       >
-        {listBuffer.items.map((item, idx) => (
+        {(listBuffer?.items || []).map((item, idx) => (
           <li key={idx} style={{ marginBottom: '8px' }}>
             {renderInlineFormatted(item)}
           </li>

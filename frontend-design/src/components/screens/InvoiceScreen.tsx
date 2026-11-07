@@ -125,7 +125,7 @@ export const InvoiceScreen: React.FC = () => {
               hedera:testnet • x402 v2
             </span>
             <div style={{ fontSize: '13px', color: '#64748B', marginTop: '6px' }}>
-              Issued: {new Date(currentInvoice.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              Issued: {currentInvoice.created_at ? new Date(currentInvoice.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
             </div>
           </div>
         </div>
@@ -140,10 +140,10 @@ export const InvoiceScreen: React.FC = () => {
           }}
         >
           <div style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B', marginBottom: '8px', textTransform: 'uppercase' }}>
-            PROMPT DESCRIPTION ({currentInvoice.model})
+            PROMPT DESCRIPTION ({currentInvoice.model || 'AI Model'})
           </div>
           <div style={{ fontSize: '18px', color: '#0F172A', fontStyle: 'italic', lineHeight: 1.6 }}>
-            "{currentInvoice.prompt_snippet}"
+            "{currentInvoice.prompt_snippet || 'No prompt description available'}"
           </div>
         </div>
 
@@ -158,7 +158,7 @@ export const InvoiceScreen: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '17px', padding: '10px 0', borderBottom: '1px dashed #CBD5E1' }}>
               <span style={{ color: '#475569' }}>Input Tokens (Prompt Validation)</span>
               <span className="font-mono" style={{ color: '#0F172A', fontWeight: 700 }}>
-                {currentInvoice.prompt_tokens.toLocaleString()} tokens
+                {(currentInvoice.prompt_tokens ?? 0).toLocaleString()} tokens
               </span>
             </div>
 
@@ -166,7 +166,7 @@ export const InvoiceScreen: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '17px', padding: '10px 0', borderBottom: '1px dashed #CBD5E1' }}>
               <span style={{ color: '#475569' }}>Output Tokens (Groq Completion)</span>
               <span className="font-mono" style={{ color: '#0F172A', fontWeight: 700 }}>
-                {currentInvoice.completion_tokens.toLocaleString()} tokens
+                {(currentInvoice.completion_tokens ?? 0).toLocaleString()} tokens
               </span>
             </div>
 
@@ -174,7 +174,7 @@ export const InvoiceScreen: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '19px', padding: '14px 0', borderBottom: '2px solid #0F172A' }}>
               <span style={{ fontWeight: 800, color: '#0F172A' }}>Total Measured Tokens</span>
               <span className="font-mono" style={{ fontWeight: 800, color: '#0F172A' }}>
-                {currentInvoice.total_tokens.toLocaleString()} tokens
+                {(currentInvoice.total_tokens ?? 0).toLocaleString()} tokens
               </span>
             </div>
           </div>
@@ -195,10 +195,10 @@ export const InvoiceScreen: React.FC = () => {
                 EXACT AMOUNT DUE
               </div>
               <div className="font-mono" style={{ fontSize: '46px', fontWeight: 800, color: '#1D4ED8', lineHeight: 1.1, marginTop: '8px' }}>
-                {currentInvoice.charge_hbar.toFixed(8)} ℏ
+                {(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ
               </div>
               <div className="font-mono" style={{ fontSize: '18px', color: '#475569', marginTop: '8px', fontWeight: 700 }}>
-                {currentInvoice.charge_tinybars.toLocaleString()} tinybars
+                {(currentInvoice.charge_tinybars ?? 0).toLocaleString()} tinybars
               </div>
             </div>
 
@@ -385,7 +385,7 @@ export const InvoiceScreen: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', backgroundColor: '#F8FAFC', border: '1.5px solid #CBD5E1' }}>
                 <span style={{ color: '#64748B', fontWeight: 700 }}>Exact Amount:</span>
                 <span className="font-mono" style={{ fontWeight: 800, color: '#1D4ED8' }}>
-                  {currentInvoice.charge_hbar.toFixed(8)} ℏ ({currentInvoice.charge_tinybars} tinybars)
+                  {(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ ({(currentInvoice.charge_tinybars ?? 0).toLocaleString()} tinybars)
                 </span>
               </div>
 
@@ -468,7 +468,7 @@ export const InvoiceScreen: React.FC = () => {
                 style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
               >
                 <CheckCircle2 size={24} />
-                <span>Verify On-Chain Transfer ({currentInvoice.charge_hbar.toFixed(8)} ℏ)</span>
+                <span>Verify On-Chain Transfer ({(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ)</span>
               </button>
             ) : !userAccount?.connected_wallet ? (
               <button
@@ -487,7 +487,7 @@ export const InvoiceScreen: React.FC = () => {
                 style={{ width: '100%', fontSize: '22px', padding: '20px 32px', border: '2px solid #0F172A', fontWeight: 800 }}
               >
                 <CheckCircle2 size={24} />
-                <span>Authorize & Pay {currentInvoice.charge_hbar.toFixed(8)} ℏ via x402</span>
+                <span>Authorize & Pay {(currentInvoice.charge_hbar ?? 0).toFixed(8)} ℏ via x402</span>
               </button>
             )}
           </div>

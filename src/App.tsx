@@ -12,6 +12,7 @@ import { InvoiceScreen } from './components/screens/InvoiceScreen';
 import { UnlockedResponseScreen } from './components/screens/UnlockedResponseScreen';
 import { ActivityScreen } from './components/screens/ActivityScreen';
 import { SettingsScreen } from './components/screens/SettingsScreen';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const MainContent: React.FC = () => {
   const { activeScreen } = useApp();
@@ -43,7 +44,9 @@ const AppShell: React.FC = () => {
 
         <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
           <Sidebar />
-          <MainContent />
+          <ErrorBoundary fallbackTitle="PerPay Workspace Error Boundary">
+            <MainContent />
+          </ErrorBoundary>
         </div>
 
         <MobileNav />
