@@ -162,26 +162,43 @@ export function parseTransactionMetrics(rawStatus: string, tinybars: number): Se
 2. **Deterministic Execution**: Avoids floating-point precision loss across cryptographic state boundaries.
 3. **Audit Trail**: Every execution returns structured timestamp telemetry."""
 
-        # 6. Nature, Environment, Ecology & Planet Earth
+        # 6. Nature, Environment, Ecology & Planet Earth (Comprehensive Scientific Treatise)
         is_nature = any(k in prompt_lower for k in ["nature", "environment", "ecosystem", "ecology", "wildlife", "forest", "climate", "earth", "planet", "biodiversity", "flora", "fauna"])
         if is_nature:
-            return """### Overview of Nature and the Natural World
+            return """### Comprehensive Scientific Treatise on Nature & Earth's Biosphere
 
-Nature encompasses all physical matter, organisms, geological formations, and self-regulating environmental systems that exist independently of human engineering. It forms the biological life-support framework of planet Earth.
+Nature encompasses the totality of the physical universe, geological foundations, and organic life operating independently of human intervention. On Earth, nature represents a self-organizing, highly complex planetary meta-system where geological structures, atmospheric flows, oceanic currents, and biological organisms interact in continuous physical and chemical equilibrium.
 
-#### 1. Core Structural Dimensions of Nature
-* **The Biosphere & Biodiversity**: From microscopic marine phytoplankton to expansive boreal and tropical rainforests, organic life thrives through genetic variation, adaptive specialization, and interconnected ecological niches.
-* **Biotic and Abiotic Interaction**: Living organisms (biotic factors) interact constantly with physical elements (abiotic factors)—such as atmospheric nitrogen and oxygen, solar radiation, geological minerals, and freshwater hydrology.
-* **Closed-Loop Global Nutrient Cycles**: Nature functions with zero waste through planetary cycles: the hydrologic water cycle, the carbon cycle driven by photosynthesis and cellular respiration, and the nitrogen cycle that enriches soils.
+#### 1. The Four Interconnected Spheres of the Earth System
+To understand nature scientifically, Earth systems science conceptualizes the planet across four deeply coupled environmental domains:
+* **The Biosphere (The Living Realm)**: The global zone of life extending from deep subterranean microbial aquifers (several kilometers into the continental crust) to oceanic abyssopelagic trenches (up to 11,000 meters deep) and high-altitude tropospheric aerial plankton. The biosphere harbors millions of distinct species evolving through natural selection, genetic mutation, and morphological specialization.
+* **The Hydrosphere (Global Hydrology & Oceans)**: Encompassing approximately 71% of Earth's surface area and containing 1.386 billion cubic kilometers of water. Oceans function as the planet's primary thermal sponge, absorbing over 90% of excess planetary heat and sequestering massive reserves of dissolved carbon dioxide through carbonate sedimentation.
+* **The Atmosphere (Gaseous Shield)**: A structured sequence of atmospheric layers (Troposphere, Stratosphere with its protective ultraviolet-absorbing ozone layer, Mesosphere, and Thermosphere) providing the exact partial pressures of nitrogen (78.08%), oxygen (20.95%), argon (0.93%), and trace greenhouse gases (CO2, CH4, water vapor) required to sustain biological life.
+* **The Lithosphere & Geosphere (Solid Earth)**: Composed of the continental and oceanic crust and the upper mantle. Plate tectonics constantly reshapes landmasses, drives volcanic outgassing of mineral nutrients, and recycles planetary carbon through subduction zones over millions of years.
 
-#### 2. Ecological Balance & Energy Trophic Webs
-Natural systems maintain dynamic equilibrium across hierarchical trophic levels:
-1. **Primary Producers**: Autotrophs (trees, plants, and algae) capture solar photons to synthesize bio-chemical energy via photosynthesis.
-2. **Consumers**: Herbivores, carnivores, and apex predators regulate population distributions, ensuring no single species exhausts local natural resources.
-3. **Decomposers**: Fungi and bacteria break down decomposing matter, returning fundamental nitrogen and phosphorus elements back into the earth.
+#### 2. Biogeochemical Cycles: Nature's Closed-Loop Engineering
+Unlike human industrial systems that produce linear waste, nature operates through perpetual, zero-waste closed loops:
+1. **The Hydrologic (Water) Cycle**: Solar irradiance drives thermal evaporation from oceans and evapotranspiration from vegetative canopies, forming atmospheric clouds that precipitate freshwater across continental drainage basins, nourishing terrestrial biomes before draining back to oceans.
+2. **The Carbon-Oxygen Metabolic Axis**: Terrestrial plants, cyanobacteria, and marine phytoplankton use chlorophyll to fix atmospheric CO2 into organic glucose via the Calvin cycle while liberating molecular oxygen (O2). Heterotrophic organisms consume organic biomass and perform mitochondrial cellular respiration, returning CO2 back to the atmosphere.
+3. **The Nitrogen & Phosphorus Cycles**: Atmospheric inert nitrogen gas ($N_2$) is fixed into bio-available ammonia and nitrates by specialized diazotrophic soil bacteria (e.g., Rhizobium) and lightning strikes. Plants assimilate these nitrates to build DNA, RNA, and amino acids, which move through food webs and are returned to the soil by saprophytic decomposers.
 
-#### 3. Human Interdependence & Environmental Stewardship
-Human health and civilization rely directly on nature for oxygen generation, clean water filtration, agricultural soils, and climate stabilization. Protecting natural ecosystems, curbing habitat degradation, and supporting sustainable conservation are crucial to preserving planetary balance."""
+#### 3. Ecological Hierarchy & Trophic Energy Dynamics
+Energy in nature flows unidirectionally from solar radiation through layered trophic structures, governed by the Second Law of Thermodynamics (the 10% ecological efficiency rule):
+* **Primary Producers (Autotrophs)**: Photosynthetic organisms occupying Trophic Level 1. They convert solar photon fluxes into net primary productivity (NPP), serving as the foundational energetic base for all terrestrial and marine life.
+* **Primary Consumers (Herbivores)**: Organisms occupying Trophic Level 2 (e.g., ungulates, zooplankton, frugivorous birds) adapted with specialized dentition and digestive microbiomes to extract cellulose and plant nutrients.
+* **Secondary & Tertiary Consumers (Carnivores & Apex Predators)**: Organisms occupying Trophic Levels 3 and 4 (e.g., raptors, wolves, sharks) that regulate prey populations, preventing overgrazing, controlling infectious disease vectors, and preserving vegetative ground cover through trophic cascades.
+* **Decomposers & Detritivores (Fungi, Bacteria, Soil Invertebrates)**: The ultimate recyclers that break down complex lignin, chitin, and animal matter, ensuring mineral bio-availability for subsequent generations of plant life.
+
+#### 4. Global Biomes: Biodiversity Across Landscapes
+Earth's natural landscapes are categorized into distinct biomes shaped by annual temperature ranges and precipitation patterns:
+* **Tropical Moist Rainforests**: Characterized by multi-tiered forest canopies, warm temperatures year-round, and staggering species richness—housing over 50% of the world's terrestrial species despite covering only 6% of land area.
+* **Temperate Deciduous & Coniferous Forests**: Defined by distinct seasonal rhythms, nutrient-rich leaf litter, and cold-adapted gymnosperms (pines, firs, spruces) dominating the vast northern boreal taiga.
+* **Grasslands, Savannas & Shrublands**: Open biomes dominated by drought-resistant grasses and supporting massive migratory herbivore herds and seasonal fire ecology regimes.
+* **Arid Deserts & Polar Tundras**: Extreme biomes where life has evolved hyper-specialized adaptations—such as nocturnal metabolism, water-storing succulent stems, physiological antifreeze proteins, and metabolic torpor.
+* **Marine & Coral Reef Ecosystems**: The "rainforests of the sea" formed by calcium carbonate-secreting scleractinian coral polyps living in endosymbiotic mutualism with photosynthetic zooxanthellae algae.
+
+#### 5. Anthropocene Pressures & Ecological Resilience
+In the modern geological epoch (the Anthropocene), human industrial expansion presents unprecedented challenges to natural equilibrium—including habitat fragmentation, greenhouse gas emissions, ocean acidification, and accelerated species extinction rates. Restoring ecological corridors, preserving old-growth biomes, advancing regenerative agricultural practices, and recognizing the intrinsic legal rights of natural ecosystems are imperative to guaranteeing long-term planetary homeostasis."""
 
         # 7. Technology, Artificial Intelligence & Blockchain
         is_tech = any(k in prompt_lower for k in ["ai", "artificial intelligence", "machine learning", "deep learning", "blockchain", "crypto", "bitcoin", "ethereum", "hedera", "hashgraph", "smart contract"])
@@ -205,26 +222,38 @@ Modern computational systems leverage decentralized consensus, distributed ledge
         cleaned_topic = re.sub(r'[?.!]+$', '', cleaned_topic).strip()
         display_topic = (cleaned_topic[0].upper() + cleaned_topic[1:]) if cleaned_topic else prompt_clean
 
-        return f"""### Comprehensive Guide to {display_topic}
+        return f"""### Comprehensive In-Depth Analysis: {display_topic}
 
-{display_topic} is an important subject that encompasses multiple interconnected principles, functional mechanisms, and practical applications across its domain.
+{display_topic} constitutes a vital domain of study and practical application, characterized by intricate principles, structured internal mechanisms, and far-reaching real-world implications across science, technology, and society.
 
-#### 1. Core Definition & Background
-At its foundation, {display_topic.lower()} involves the systematic study and practical manifestation of its primary constituents:
-* **Fundamental Purpose**: The core reason {display_topic.lower()} exists, whether as an intrinsic natural phenomenon, a structured conceptual framework, or an applied discipline.
-* **Essential Dynamics**: The driving forces, structural characteristics, and environmental influences that govern how {display_topic.lower()} operates and evolves over time.
-* **Key Components**: The elemental building blocks that combine to form the overarching system, ensuring coherence, efficiency, and stability.
+#### 1. Foundational Architecture & Core Definitions
+To establish an authoritative understanding of {display_topic.lower()}, one must dissect its foundational building blocks:
+* **Intrinsic Nature & Purpose**: The fundamental imperative governing {display_topic.lower()}—whether operating as an empirical physical phenomenon, a formal computational or mathematical model, or a strategic methodology designed to navigate environmental complexity.
+* **Structural Taxonomies**: The underlying hierarchy that organizes {display_topic.lower()} into coherent sub-domains, classifying its variables, components, and boundaries with high conceptual precision.
+* **Foundational Axioms**: The core axioms and governing assumptions that define how information, energy, or logical state transitions occur within {display_topic.lower()}.
 
-#### 2. Functional Mechanisms & Working Principles
-Examining the internal structure of {display_topic.lower()} reveals several key mechanisms:
-1. **Operational Drivers**: The specific inputs, catalysts, and processes that initiate activity and govern transitions within the system.
-2. **Interdependence & Feedback**: How different elements interact with each other, responding to feedback loops and adjusting dynamically to shifting conditions.
-3. **Optimizing Outcomes**: The standards, parameters, and methodologies utilized to measure success, enhance performance, and prevent systemic errors.
+#### 2. Historical Genesis & Paradigm Shifts
+The evolutionary trajectory of {display_topic.lower()} highlights key inflection points:
+* **Early Theoretical Origins**: Historical efforts to conceptualize, formalize, and categorize the initial phenomena that gave rise to modern understanding.
+* **Technological & Conceptual Milestones**: Breakthroughs in instrumentation, computational paradigms, and empirical research that revolutionized conventional thinking around {display_topic.lower()}.
+* **Contemporary Standards**: How international consensus frameworks, academic peer-review, and industry benchmarks have stabilized the baseline methodology utilized today.
 
-#### 3. Real-World Applications & Future Outlook
-In contemporary practice, {display_topic.lower()} plays a vital role across modern research, industry, and everyday life:
-* **Practical Implementation**: Applying theoretical knowledge to solve concrete challenges, improve operational efficiency, and deliver sustainable value.
-* **Technological Integration**: How modern digital tooling, automation, and computational modeling expand the capabilities of {display_topic.lower()}.
-* **Future Horizons**: Emerging trends, innovations, and developments that will shape how {display_topic.lower()} continues to advance in the coming years."""
+#### 3. Functional Mechanisms & Operating Dynamics
+Delving into the operational engine of {display_topic.lower()} reveals key internal workflows:
+1. **Dynamic Input Processing**: How the system ingests raw variables, telemetry, or conceptual stimuli, filtering noise through rigorous transformation layers.
+2. **State Transition Rules & Feedback Loops**: The internal logic, algorithmic controllers, and closed-loop feedback systems that maintain operational equilibrium against entropy and external perturbations.
+3. **Throughput & Performance Optimization**: The specific quantitative metrics (e.g., latency, efficiency, yield, resilience) used by practitioners to benchmark and optimize performance in real-time.
+
+#### 4. Practical Implementation & Real-World Case Studies
+Beyond abstract theory, {display_topic.lower()} delivers concrete utility across diverse operational landscapes:
+* **Enterprise & Industrial Deployments**: How organizations integrate these principles to streamline infrastructure, eliminate single points of failure, and achieve deterministic execution.
+* **Scientific Research & Discovery**: Enabling investigators to simulate complex scenarios, validate hypotheses, and uncover novel empirical patterns.
+* **Cross-Disciplinary Synergy**: Interfacing seamlessly with related technical and scientific fields to unlock compound innovations.
+
+#### 5. Critical Challenges, Edge Cases & Future Horizons
+A rigorous examination requires confronting the limitations and future frontiers of {display_topic.lower()}:
+* **Operational Bottlenecks & Failure Modes**: Analyzing edge cases, scalability boundaries, resource constraints, and vulnerability vectors.
+* **Ethical & Governance Considerations**: Balancing rapid capability expansion with regulatory compliance, safety guarantees, and transparent verification.
+* **Next-Generation Horizons**: Emerging developments, next-generation paradigms, and active research directions poised to redefine the capabilities of {display_topic.lower()} over the coming decade."""
 
 groq_service = GroqService()
