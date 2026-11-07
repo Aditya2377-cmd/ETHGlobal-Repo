@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PerPay — Hedera Integration Code | ETHGlobal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --hedera-purple: #8247e5;
+      --hedera-green: #00e39e;
+      --hedera-dark: #222222;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #1a0533 40%, #0d2137 100%);
+      padding: 3rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .hero h1 span { color: var(--hedera-green); }
+    .hero p { color: var(--muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto; }
+    .badge-row {
+      display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .badge.hedera { background: rgba(0,227,158,0.15); color: var(--hedera-green); border-color: var(--hedera-green); }
+    .badge.x402 { background: rgba(88,166,255,0.15); color: var(--accent); border-color: var(--accent); }
+    .badge.ts { background: rgba(49,120,198,0.15); color: #3178c6; border-color: #3178c6; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .toc h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--hedera-green); }
+    .toc ul { list-style: none; }
+    .toc li { margin: 0.4rem 0; }
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .toc a:hover { text-decoration: underline; }
+    .toc .desc { color: var(--muted); font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+
+    .file-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    .file-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: rgba(0,227,158,0.06);
+      border-bottom: 1px solid var(--border);
+    }
+    .file-header .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--hedera-green);
+      font-weight: 600;
+    }
+    .file-header .gh-link {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .file-header .gh-link:hover { background: rgba(88,166,255,0.1); }
+    .file-desc {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .file-section pre {
+      margin: 0;
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+    }
+    .file-section code {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+
+    .arch-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .arch-diagram h2 { color: var(--hedera-green); margin-bottom: 1rem; }
+    .flow-steps {
+      display: grid; grid-template-columns: 1fr; gap: 0.75rem;
+    }
+    .flow-step {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-left: 3px solid var(--hedera-green);
+      background: rgba(0,227,158,0.03);
+      border-radius: 0 6px 6px 0;
+    }
+    .flow-step .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: var(--hedera-green);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .flow-step .step-text { font-size: 0.9rem; }
+    .flow-step .step-text strong { color: var(--hedera-green); }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 700px) {
+      .hero h1 { font-size: 1.6rem; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======== HERO ======== -->
+<div class="hero">
+  <h1>PerPay — <span>Hedera</span> Integration Code</h1>
+  <p>Extracted Hedera Testnet payment, signing, settlement, and reconciliation code from the PerPay x402 v2 system built at ETHGlobal.</p>
+  <div class="badge-row">
+    <span class="badge hedera">Hedera Testnet</span>
+    <span class="badge x402">x402 v2 Protocol</span>
+    <span class="badge ts">TypeScript</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ======== TABLE OF CONTENTS ======== -->
+<div class="toc">
+  <h2>📁 Hedera Code Files Extracted</h2>
+  <ul>
+    <li><a href="#constants">constants.ts</a> <span class="desc">— Hedera network IDs, Mirror Node URLs, HashScan base URL, tinybars conversion constant</span></li>
+    <li><a href="#types">types.ts</a> <span class="desc">— Payment state types, Hedera-specific type definitions (PaymentPayloadDoc, PaymentRequirementDoc, SettlementRecord)</span></li>
+    <li><a href="#config">config.ts</a> <span class="desc">— Hedera Testnet configuration schema with mainnet rejection safeguard</span></li>
+    <li><a href="#hedera-signer">hedera-signer.ts</a> <span class="desc">— HederaTestnetSigner class: constructs, freezes &amp; signs TransferTransactions using @x402/hedera SDK</span></li>
+    <li><a href="#payment-service">payment.service.ts</a> <span class="desc">— Core x402 pay-to-unlock orchestration: builds payment requirements, validates signatures, settles on Hedera</span></li>
+    <li><a href="#facilitator-service">facilitator.service.ts</a> <span class="desc">— Facilitator integration: queries /supported for Hedera fee-payer, dispatches /verify &amp; /settle</span></li>
+    <li><a href="#reconciliation-service">reconciliation.service.ts</a> <span class="desc">— Independent on-chain reconciliation via Hedera Mirror Node with bounded retries</span></li>
+    <li><a href="#amount-utils">amount.ts</a> <span class="desc">— Tinybars ↔ HBAR conversion utilities with zero floating-point precision loss</span></li>
+    <li><a href="#state-machine">state-machine.service.ts</a> <span class="desc">— Payment state machine governing Hedera settlement lifecycle</span></li>
+    <li><a href="#cli-payer">cli-payer.ts</a> <span class="desc">— Interactive CLI client that signs &amp; submits Hedera Testnet payments</span></li>
+  </ul>
+</div>
+
+<!-- ======== ARCHITECTURE ======== -->
+<div class="arch-diagram">
+  <h2>🔗 Hedera Payment Flow</h2>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>402 Challenge</strong> — Server issues HTTP 402 with PAYMENT-REQUIRED header containing Hedera Testnet payment requirements (receiver account, tinybars amount, facilitator fee-payer).</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Client Signing</strong> — HederaTestnetSigner constructs a <code>TransferTransaction</code> anchored to the facilitator's fee-payer, adds debit/credit transfers, freezes &amp; signs with customer's private key.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>Facilitator Verify</strong> — FacilitatorService dispatches the signed payload to <code>/verify</code> to validate transaction signature and constraints.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-text"><strong>Facilitator Settle</strong> — FacilitatorService dispatches to <code>/settle</code> — facilitator co-signs the fee and submits the CryptoTransfer to <strong>Hedera Testnet consensus</strong>.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">5</div>
+      <div class="step-text"><strong>Mirror Node Reconciliation</strong> — ReconciliationService independently queries the <strong>Hedera Mirror Node</strong> to confirm SUCCESS status and verify exact tinybars credited to receiver.</div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">6</div>
+      <div class="step-text"><strong>Content Unlock</strong> — Only after on-chain confirmation, the AI-generated content is released to the user with a HashScan transaction proof.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== FILE: constants.ts ======== -->
+<div class="file-section" id="constants">
+  <div class="file-header">
+    <span class="path">x402-service/src/constants.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/constants.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Hedera network identifiers, default Mirror Node / Facilitator URLs, HashScan explorer base, safety limits, and the tinybars-per-HBAR constant.</div>
+  <pre><code class="language-typescript">export const TINYBARS_PER_HBAR = 100_000_000n;
+export const HEDERA_TESTNET_CAIP2 = "hedera:testnet";
+export const HEDERA_NATIVE_ASSET = "0.0.0";
+export const SCHEME_EXACT = "exact";
+export const X402_VERSION = 2;
+
+// HTTP Header Constants
+export const HTTP_HEADER_PAYMENT_REQUIRED = "PAYMENT-REQUIRED";
+export const HTTP_HEADER_PAYMENT_SIGNATURE = "PAYMENT-SIGNATURE";
+export const HTTP_HEADER_PAYMENT_RESPONSE = "PAYMENT-RESPONSE";
+export const INTERNAL_SECRET_HEADER = "x-internal-secret";
+
+// Hedera Defaults &amp; Explorers
+export const DEFAULT_FACILITATOR_URL = "https://x402.org/facilitator";
+export const DEFAULT_FACILITATOR_FEE_PAYER = "0.0.9185802";
+export const DEFAULT_MIRROR_NODE_URL = "https://testnet.mirrornode.hedera.com";
+export const HASHSCAN_TESTNET_BASE_URL = "https://hashscan.io/testnet/transaction";
+
+// Safety limits
+export const MAX_RECONCILIATION_ATTEMPTS = 5;
+export const RECONCILIATION_DELAY_MS = 1500;
+export const MAX_OUTBOX_RETRIES = 5;
+export const DEFAULT_TIMEOUT_SECONDS = 120;</code></pre>
+</div>
+
+<!-- ======== FILE: types.ts ======== -->
+<div class="file-section" id="types">
+  <div class="file-header">
+    <span class="path">x402-service/src/types.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/types.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Hedera-specific TypeScript type definitions — payment states, payment requirements (locked to "hedera:testnet"), settlement records, facilitator types, and shared event schemas.</div>
+  <pre><code class="language-typescript">export type PaymentState =
+  | "PAYMENT_REQUIRED"
+  | "PAYMENT_SUBMITTED"
+  | "VERIFYING"
+  | "SETTLING"
+  | "SETTLEMENT_PENDING"
+  | "RECONCILIATION_REQUIRED"
+  | "CONFIRMED"
+  | "FAILED"
+  | "EXPIRED";
+
+export type DeliveryStatus =
+  | "AWAITING_PAYMENT"
+  | "DELIVERED"
+  | "DELIVERY_FAILED"
+  | "EXPIRED";
+
+export interface TrustedInvoiceContext {
+  invoice_id: string;
+  generation_id: string;
+  request_id: string;
+  user_id: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  charge_tinybars: number;
+  charge_hbar: string;
+  model: string;
+  status: "UNPAID" | "PAID" | "EXPIRED" | "CANCELLED";
+  created_at: string;
+  expires_at: string;
+}
+
+export interface PaymentRequirementDoc {
+  x402Version: 2;
+  accepts: Array&lt;{
+    scheme: "exact";
+    network: "hedera:testnet";
+    asset: "0.0.0";
+    amount: string; // tinybars
+    payTo: string;  // receiver account 0.0.x
+    maxTimeoutSeconds: number;
+    extra: {
+      feePayer: string;
+      assetTransferMethod?: string;
+    };
+  }&gt;;
+  resource: {
+    url: string;
+    description: string;
+    mimeType?: string;
+  };
+  error?: string;
+}
+
+export interface PaymentPayloadDoc {
+  x402Version: 2;
+  scheme: "exact";
+  network: "hedera:testnet";
+  payload: {
+    transaction: string; // base64 encoded signed TransferTransaction
+    payer?: string;
+  };
+}
+
+export interface PaymentAttemptRecord {
+  payment_id: string;
+  invoice_id: string;
+  generation_id: string;
+  payload_digest: string;
+  raw_payload: string;
+  state: PaymentState;
+  error_message?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SettlementRecord {
+  transaction_id: string;
+  invoice_id: string;
+  generation_id: string;
+  payer_account: string;
+  receiver_account: string;
+  amount_tinybars: number;
+  consensus_timestamp: string;
+  mirror_status: string;
+  hashscan_url: string;
+  confirmed_at: string;
+}
+
+export interface OutboxEventRecord {
+  event_id: string;
+  event_type: string;
+  payload: string;
+  status: "PENDING" | "SENT" | "FAILED";
+  retry_count: number;
+  next_attempt_at: string;
+  last_error?: string | null;
+  created_at: string;
+  sent_at?: string | null;
+}
+
+export interface SharedPaymentEvent {
+  schema_version: "2.0.0";
+  event_id: string;
+  timestamp: string;
+  request_id: string;
+  invoice_id: string;
+  generation_id: string;
+  user_id: string;
+  wallet: string | null;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  charge_tinybars: number;
+  charge_hbar: string;
+  network: "hedera:testnet";
+  payment_scheme: "exact";
+  payment_status: PaymentState;
+  transaction_id: string | null;
+  transaction_url: string | null;
+  delivery_status: DeliveryStatus;
+}
+
+export interface FacilitatorSupportedKind {
+  x402Version: number;
+  scheme: string;
+  network: string;
+  extra?: {
+    feePayer?: string;
+    assetTransferMethods?: string[];
+    [key: string]: unknown;
+  };
+}
+
+export interface FacilitatorSupportedResponse {
+  kinds: FacilitatorSupportedKind[];
+  signers?: Record&lt;string, string[]&gt;;
+  extensions?: string[];
+}</code></pre>
+</div>
+
+<!-- ======== FILE: config.ts ======== -->
+<div class="file-section" id="config">
+  <div class="file-header">
+    <span class="path">x402-service/src/config.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/config.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Runtime configuration with Zod validation — enforces Hedera Testnet-only operation and rejects any accidental mainnet configuration.</div>
+  <pre><code class="language-typescript">import dotenv from "dotenv";
+import path from "path";
+import { z } from "zod";
+import {
+  DEFAULT_FACILITATOR_URL,
+  DEFAULT_MIRROR_NODE_URL,
+  DEFAULT_TIMEOUT_SECONDS,
+  HEDERA_TESTNET_CAIP2,
+} from "./constants";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+const configSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(4020),
+  HEDERA_NETWORK: z.string().default(HEDERA_TESTNET_CAIP2),
+  HEDERA_RECEIVER_ACCOUNT_ID: z
+    .string()
+    .regex(/^0\.0\.[1-9][0-9]*$/, "Receiver account must follow Hedera 0.0.x format")
+    .default("0.0.9999999"),
+  FACILITATOR_URL: z.string().url().default(DEFAULT_FACILITATOR_URL),
+  FASTAPI_GATEWAY_URL: z.string().url().default("http://localhost:8000"),
+  INTERNAL_SERVICE_SECRET: z.string().min(8).default("perpay_internal_secret_dev_mode_only"),
+  HEDERA_MIRROR_NODE_URL: z.string().url().default(DEFAULT_MIRROR_NODE_URL),
+  SQLITE_DB_PATH: z.string().default("./data/perpay_payments.db"),
+  MAX_PAYMENT_TIMEOUT_SECONDS: z.coerce.number().int().positive().default(DEFAULT_TIMEOUT_SECONDS),
+  TESTNET_SMOKE_PAYER_ID: z.string().optional(),
+  TESTNET_SMOKE_PAYER_KEY: z.string().optional(),
+});
+
+function loadConfig() {
+  const parsed = configSchema.safeParse(process.env);
+  if (!parsed.success) {
+    console.error("Configuration validation error:", parsed.error.format());
+    throw new Error(`Invalid configuration: ${JSON.stringify(parsed.error.format())}`);
+  }
+
+  const cfg = parsed.data;
+
+  // Strict Mainnet rejection
+  if (cfg.HEDERA_NETWORK !== HEDERA_TESTNET_CAIP2 || cfg.HEDERA_NETWORK.toLowerCase().includes("mainnet")) {
+    throw new Error(
+      `Accidental mainnet configuration rejected: "${cfg.HEDERA_NETWORK}". PerPay payment service strictly requires "${HEDERA_TESTNET_CAIP2}".`
+    );
+  }
+
+  // Ensure mirror node is not pointed to mainnet
+  if (cfg.HEDERA_MIRROR_NODE_URL.toLowerCase().includes("mainnet-public")) {
+    throw new Error("Hedera mirror node cannot point to mainnet in testnet environment.");
+  }
+
+  return cfg;
+}
+
+export const config = loadConfig();
+export type Config = typeof config;</code></pre>
+</div>
+
+<!-- ======== FILE: hedera-signer.ts ======== -->
+<div class="file-section" id="hedera-signer">
+  <div class="file-header">
+    <span class="path">x402-service/src/client/hedera-signer.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/client/hedera-signer.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Core Hedera signing class — uses the <code>@x402/hedera</code> SDK to construct, freeze, and sign <code>TransferTransaction</code> instances anchored to the facilitator's fee-payer account.</div>
+  <pre><code class="language-typescript">import {
+  AccountId,
+  Client,
+  Hbar,
+  PrivateKey,
+  TransactionId,
+  TransferTransaction,
+} from "@x402/hedera";
+import { HEDERA_TESTNET_CAIP2, SCHEME_EXACT, X402_VERSION } from "../constants";
+import { PaymentPayloadDoc, PaymentRequirementDoc } from "../types";
+
+export interface SignerOptions {
+  payerAccountId: string;
+  payerPrivateKey: string; // DER or Hex string (never committed or exposed)
+}
+
+export class HederaTestnetSigner {
+  private readonly payerAccountId: AccountId;
+  private readonly payerPrivateKey: PrivateKey;
+  private readonly client: Client;
+
+  constructor(options: SignerOptions) {
+    if (!options.payerAccountId || !options.payerPrivateKey) {
+      throw new Error("HederaTestnetSigner requires payerAccountId and payerPrivateKey");
+    }
+
+    this.payerAccountId = AccountId.fromString(options.payerAccountId);
+    this.payerPrivateKey = PrivateKey.fromString(options.payerPrivateKey);
+    this.client = Client.forTestnet();
+  }
+
+  /**
+   * Constructs, freezes, and signs an exact cryptoTransfer transaction
+   * using the facilitator's feePayer.
+   */
+  public async createSignedPaymentPayload(
+    requirements: PaymentRequirementDoc["accepts"][0]
+  ): Promise&lt;PaymentPayloadDoc&gt; {
+    if (requirements.network !== HEDERA_TESTNET_CAIP2) {
+      throw new Error(`Unsupported network for Hedera Testnet Signer: ${requirements.network}`);
+    }
+
+    if (!requirements.extra?.feePayer) {
+      throw new Error("Missing mandatory extra.feePayer in payment requirements");
+    }
+
+    const feePayerId = AccountId.fromString(requirements.extra.feePayer);
+    const receiverId = AccountId.fromString(requirements.payTo);
+    const amountTinybars = BigInt(requirements.amount);
+
+    if (amountTinybars &lt;= 0n) {
+      throw new Error(`Tinybars amount must be strictly positive: ${amountTinybars}`);
+    }
+
+    // Generate transaction ID anchored to the facilitator's fee payer
+    const txId = TransactionId.generate(feePayerId);
+
+    // Build cryptoTransfer: Customer account debited, receiver credited
+    const transferTx = new TransferTransaction()
+      .setTransactionId(txId)
+      .addHbarTransfer(this.payerAccountId, Hbar.fromTinybars(-Number(amountTinybars)))
+      .addHbarTransfer(receiverId, Hbar.fromTinybars(Number(amountTinybars)))
+      .freezeWith(this.client);
+
+    // Customer signs their debit transfer
+    const signedTx = await transferTx.sign(this.payerPrivateKey);
+    const signedBytesB64 = Buffer.from(signedTx.toBytes()).toString("base64");
+
+    return {
+      x402Version: X402_VERSION,
+      scheme: SCHEME_EXACT,
+      network: HEDERA_TESTNET_CAIP2,
+      payload: {
+        transaction: signedBytesB64,
+        payer: this.payerAccountId.toString(),
+      },
+    };
+  }
+
+  /**
+   * Helper to format the payment signature header value directly.
+   */
+  public async createPaymentSignatureHeader(
+    requirements: PaymentRequirementDoc["accepts"][0]
+  ): Promise&lt;string&gt; {
+    const payloadDoc = await this.createSignedPaymentPayload(requirements);
+    return Buffer.from(JSON.stringify(payloadDoc)).toString("base64");
+  }
+
+  public close(): void {
+    this.client.close();
+  }
+}</code></pre>
+</div>
+
+<!-- ======== FILE: payment.service.ts ======== -->
+<div class="file-section" id="payment-service">
+  <div class="file-header">
+    <span class="path">x402-service/src/services/payment.service.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/services/payment.service.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Central orchestrator for the x402 pay-to-unlock flow on Hedera Testnet — builds payment requirements, issues 402 challenges, validates signatures, settles via facilitator, reconciles on Hedera Mirror Node, and unlocks content.</div>
+  <pre><code class="language-typescript">import crypto from "crypto";
+import {
+  HEDERA_NATIVE_ASSET,
+  HEDERA_TESTNET_CAIP2,
+  SCHEME_EXACT,
+  X402_VERSION,
+} from "../constants";
+import { PaymentRepository } from "../db/repository";
+import {
+  PaymentPayloadDoc,
+  PaymentRequirementDoc,
+  SettlementRecord,
+  SharedPaymentEvent,
+  TrustedInvoiceContext,
+} from "../types";
+import { FacilitatorService } from "./facilitator.service";
+import { GatewayClient } from "./gateway.client";
+import { ReconciliationService } from "./reconciliation.service";
+import { PaymentStateMachine } from "./state-machine.service";
+
+export interface PayToUnlockResult {
+  statusCode: 200 | 400 | 402 | 403 | 404 | 500;
+  headers: Record&lt;string, string&gt;;
+  body: Record&lt;string, unknown&gt;;
+  responseUnlocked: boolean;
+}
+
+export class PaymentService {
+  constructor(
+    private readonly repo: PaymentRepository,
+    private readonly facilitatorService: FacilitatorService,
+    private readonly reconciliationService: ReconciliationService,
+    private readonly gatewayClient: GatewayClient,
+    private readonly receiverAccountId: string,
+    private readonly maxTimeoutSeconds: number
+  ) {}
+
+  /**
+   * Builds x402 v2 payment requirements document for an invoice.
+   */
+  public async buildPaymentRequirements(
+    invoice: TrustedInvoiceContext,
+    resourceUrl: string
+  ): Promise&lt;PaymentRequirementDoc&gt; {
+    const supported = await this.facilitatorService.getSupported();
+    const feePayer = supported.feePayer;
+
+    return {
+      x402Version: X402_VERSION,
+      accepts: [
+        {
+          scheme: SCHEME_EXACT,
+          network: HEDERA_TESTNET_CAIP2,
+          asset: HEDERA_NATIVE_ASSET,
+          amount: invoice.charge_tinybars.toString(),
+          payTo: this.receiverAccountId,
+          maxTimeoutSeconds: this.maxTimeoutSeconds,
+          extra: {
+            feePayer,
+            assetTransferMethod: "cryptoTransfer",
+          },
+        },
+      ],
+      resource: {
+        url: resourceUrl,
+        description: `PerPay AI Generation (${invoice.model}, ${invoice.total_tokens} tokens)`,
+      },
+    };
+  }
+
+  /**
+   * Evaluates or executes the Pay-to-Unlock flow for a generation result.
+   */
+  public async handlePayToUnlock(
+    generationId: string,
+    resourceUrl: string,
+    paymentSignatureHeader?: string,
+    authenticatedUserId?: string
+  ): Promise&lt;PayToUnlockResult&gt; {
+    // 1. Check if generation has already been settled and confirmed in durable local DB
+    const existingSettlement = this.repo.getSettlementByGenerationId(generationId);
+    if (existingSettlement) {
+      const storedContent = await this.gatewayClient.fetchStoredResponse(generationId);
+      return {
+        statusCode: 200,
+        headers: { "Cache-Control": "private, no-cache" },
+        body: {
+          generation_id: generationId,
+          content: storedContent?.content || "(Response already unlocked)",
+          model: storedContent?.model,
+          total_tokens: storedContent?.total_tokens,
+          settlement: {
+            transaction_id: existingSettlement.transaction_id,
+            transaction_url: existingSettlement.hashscan_url,
+            amount_tinybars: existingSettlement.amount_tinybars,
+            confirmed_at: existingSettlement.confirmed_at,
+          },
+        },
+        responseUnlocked: true,
+      };
+    }
+
+    // 2. Fetch authoritative invoice context from FastAPI
+    let invoice = this.repo.getInvoiceByGenerationId(generationId);
+    if (!invoice) {
+      invoice = await this.gatewayClient.fetchInvoiceContext(generationId);
+      if (invoice) { this.repo.saveInvoice(invoice); }
+    }
+
+    if (!invoice) {
+      return {
+        statusCode: 404, headers: {},
+        body: { error: `No active invoice found for generation ${generationId}` },
+        responseUnlocked: false,
+      };
+    }
+
+    // Check account-level ownership
+    if (authenticatedUserId &amp;&amp; invoice.user_id !== authenticatedUserId) {
+      return {
+        statusCode: 403, headers: {},
+        body: { error: "User unauthorized to access this generation invoice" },
+        responseUnlocked: false,
+      };
+    }
+
+    // Check invoice expiry
+    if (new Date(invoice.expires_at).getTime() &lt; Date.now()) {
+      return {
+        statusCode: 400, headers: {},
+        body: {
+          error: "Invoice has expired. Please create a new generation request.",
+          invoice_id: invoice.invoice_id,
+          expires_at: invoice.expires_at,
+        },
+        responseUnlocked: false,
+      };
+    }
+
+    // 3. If no PAYMENT-SIGNATURE header provided, issue HTTP 402 challenge
+    const requirementDoc = await this.buildPaymentRequirements(invoice, resourceUrl);
+    const requirementB64 = Buffer.from(JSON.stringify(requirementDoc)).toString("base64");
+
+    if (!paymentSignatureHeader) {
+      return {
+        statusCode: 402,
+        headers: {
+          "PAYMENT-REQUIRED": requirementB64,
+          "Content-Type": "application/json",
+        },
+        body: {
+          error: "Payment Required",
+          invoice_id: invoice.invoice_id,
+          generation_id: invoice.generation_id,
+          charge_tinybars: invoice.charge_tinybars,
+          charge_hbar: invoice.charge_hbar,
+          network: HEDERA_TESTNET_CAIP2,
+          payTo: this.receiverAccountId,
+          feePayer: requirementDoc.accepts[0].extra.feePayer,
+        },
+        responseUnlocked: false,
+      };
+    }
+
+    // 4. Decode and validate PAYMENT-SIGNATURE payload
+    let payloadDoc: PaymentPayloadDoc;
+    try {
+      const decodedJson = Buffer.from(paymentSignatureHeader, "base64").toString("utf-8");
+      payloadDoc = JSON.parse(decodedJson);
+    } catch {
+      return {
+        statusCode: 400,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: { error: "Invalid PAYMENT-SIGNATURE header: failed to decode base64 JSON" },
+        responseUnlocked: false,
+      };
+    }
+
+    if (
+      payloadDoc.x402Version !== X402_VERSION ||
+      payloadDoc.scheme !== SCHEME_EXACT ||
+      payloadDoc.network !== HEDERA_TESTNET_CAIP2 ||
+      !payloadDoc.payload?.transaction
+    ) {
+      return {
+        statusCode: 400,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: {
+          error: "Unsupported x402 payment signature format or network",
+          expected: { x402Version: 2, scheme: "exact", network: HEDERA_TESTNET_CAIP2 },
+        },
+        responseUnlocked: false,
+      };
+    }
+
+    // 5. Replay and Idempotency Check
+    const digest = crypto.createHash("sha256").update(payloadDoc.payload.transaction).digest("hex");
+    const paymentId = crypto.randomUUID();
+    this.repo.recordPaymentAttempt({
+      payment_id: paymentId, invoice_id: invoice.invoice_id,
+      generation_id: invoice.generation_id, payload_digest: digest,
+      raw_payload: JSON.stringify(payloadDoc), state: "PAYMENT_SUBMITTED",
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    });
+
+    PaymentStateMachine.assertValidTransition("PAYMENT_REQUIRED", "PAYMENT_SUBMITTED");
+
+    // 6. Verification with Facilitator
+    PaymentStateMachine.assertValidTransition("PAYMENT_SUBMITTED", "VERIFYING");
+    this.repo.updatePaymentAttemptState(paymentId, "VERIFYING");
+
+    const reqAccept = requirementDoc.accepts[0];
+    const verifyResult = await this.facilitatorService.verifyPayment(payloadDoc, reqAccept);
+    if (!verifyResult.isValid) {
+      this.repo.updatePaymentAttemptState(paymentId, "FAILED", verifyResult.invalidReason);
+      return {
+        statusCode: 402,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: { error: "Payment verification failed", reason: verifyResult.invalidReason },
+        responseUnlocked: false,
+      };
+    }
+
+    // 7. Settlement with Facilitator
+    PaymentStateMachine.assertValidTransition("VERIFYING", "SETTLING");
+    this.repo.updatePaymentAttemptState(paymentId, "SETTLING");
+
+    const settleResult = await this.facilitatorService.settlePayment(payloadDoc, reqAccept);
+    if (!settleResult.success || !settleResult.transactionId) {
+      this.repo.updatePaymentAttemptState(paymentId, "FAILED", settleResult.error);
+      return {
+        statusCode: 402,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: { error: "Payment settlement failed", reason: settleResult.error },
+        responseUnlocked: false,
+      };
+    }
+
+    const txId = settleResult.transactionId;
+
+    // Duplicate transaction check
+    const existingTx = this.repo.getSettlementByTransactionId(txId);
+    if (existingTx &amp;&amp; existingTx.invoice_id !== invoice.invoice_id) {
+      this.repo.updatePaymentAttemptState(paymentId, "FAILED",
+        `Transaction ${txId} already applied to another invoice ${existingTx.invoice_id}`);
+      return {
+        statusCode: 400,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: { error: "Duplicate transaction rejected. Transaction already redeemed." },
+        responseUnlocked: false,
+      };
+    }
+
+    // 8. Independent On-Chain Reconciliation via Hedera Mirror Node
+    PaymentStateMachine.assertValidTransition("SETTLING", "RECONCILIATION_REQUIRED");
+    this.repo.updatePaymentAttemptState(paymentId, "RECONCILIATION_REQUIRED");
+
+    const recon = await this.reconciliationService.reconcileOnChain(
+      txId, this.receiverAccountId, invoice.charge_tinybars, payloadDoc.payload.payer
+    );
+
+    if (!recon.isConfirmed) {
+      this.repo.updatePaymentAttemptState(paymentId, "SETTLEMENT_PENDING", recon.errorMessage);
+      return {
+        statusCode: 402,
+        headers: { "PAYMENT-REQUIRED": requirementB64 },
+        body: {
+          error: "Settlement submitted but pending on-chain confirmation. Please retry.",
+          transaction_id: txId,
+          transaction_url: recon.hashscanUrl,
+        },
+        responseUnlocked: false,
+      };
+    }
+
+    // 9. Confirmed Settlement: Atomic DB record &amp; Outbox Event
+    PaymentStateMachine.assertValidTransition("RECONCILIATION_REQUIRED", "CONFIRMED");
+    const confirmedSettlement: SettlementRecord = {
+      transaction_id: recon.transactionId,
+      invoice_id: invoice.invoice_id,
+      generation_id: invoice.generation_id,
+      payer_account: recon.payerAccount,
+      receiver_account: recon.receiverAccount,
+      amount_tinybars: recon.amountTinybars,
+      consensus_timestamp: recon.consensusTimestamp,
+      mirror_status: recon.mirrorStatus,
+      hashscan_url: recon.hashscanUrl,
+      confirmed_at: new Date().toISOString(),
+    };
+
+    const sharedEvent: SharedPaymentEvent = {
+      schema_version: "2.0.0",
+      event_id: crypto.randomUUID(),
+      timestamp: confirmedSettlement.confirmed_at,
+      request_id: invoice.request_id,
+      invoice_id: invoice.invoice_id,
+      generation_id: invoice.generation_id,
+      user_id: invoice.user_id,
+      wallet: recon.payerAccount || null,
+      model: invoice.model,
+      prompt_tokens: invoice.prompt_tokens,
+      completion_tokens: invoice.completion_tokens,
+      total_tokens: invoice.total_tokens,
+      charge_tinybars: invoice.charge_tinybars,
+      charge_hbar: invoice.charge_hbar,
+      network: HEDERA_TESTNET_CAIP2,
+      payment_scheme: SCHEME_EXACT,
+      payment_status: "CONFIRMED",
+      transaction_id: recon.transactionId,
+      transaction_url: recon.hashscanUrl,
+      delivery_status: "DELIVERED",
+    };
+
+    this.repo.saveConfirmedSettlement(confirmedSettlement, sharedEvent);
+    this.repo.updatePaymentAttemptState(paymentId, "CONFIRMED");
+
+    this.gatewayClient.notifySettlement(confirmedSettlement).catch(() =&gt; {});
+
+    // 10. Fetch stored response and unlock
+    const storedResponse = await this.gatewayClient.fetchStoredResponse(invoice.generation_id);
+
+    const paymentResponsePayload = {
+      success: true,
+      transaction: recon.transactionId,
+      transactionUrl: recon.hashscanUrl,
+      network: HEDERA_TESTNET_CAIP2,
+      amount: invoice.charge_tinybars.toString(),
+      payer: recon.payerAccount,
+    };
+    const paymentResponseHeader = Buffer.from(JSON.stringify(paymentResponsePayload)).toString("base64");
+
+    return {
+      statusCode: 200,
+      headers: {
+        "PAYMENT-RESPONSE": paymentResponseHeader,
+        "Cache-Control": "private, no-cache",
+      },
+      body: {
+        generation_id: invoice.generation_id,
+        content: storedResponse?.content || "(Response unlocked)",
+        model: storedResponse?.model || invoice.model,
+        total_tokens: storedResponse?.total_tokens || invoice.total_tokens,
+        settlement: {
+          transaction_id: recon.transactionId,
+          transaction_url: recon.hashscanUrl,
+          amount_tinybars: recon.amountTinybars,
+          confirmed_at: confirmedSettlement.confirmed_at,
+        },
+      },
+      responseUnlocked: true,
+    };
+  }
+}</code></pre>
+</div>
+
+<!-- ======== FILE: facilitator.service.ts ======== -->
+<div class="file-section" id="facilitator-service">
+  <div class="file-header">
+    <span class="path">x402-service/src/services/facilitator.service.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/services/facilitator.service.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Facilitator integration layer — queries /supported for Hedera Testnet compatibility and fee-payer, validates account ID format (0.0.x), and dispatches to /verify &amp; /settle endpoints.</div>
+  <pre><code class="language-typescript">import {
+  DEFAULT_FACILITATOR_FEE_PAYER,
+  HEDERA_TESTNET_CAIP2,
+  SCHEME_EXACT,
+  X402_VERSION,
+} from "../constants";
+import {
+  FacilitatorSupportedKind,
+  FacilitatorSupportedResponse,
+  PaymentPayloadDoc,
+  PaymentRequirementDoc,
+} from "../types";
+
+export interface FacilitatorCheckResult {
+  isCompatible: boolean;
+  feePayer: string;
+  kind?: FacilitatorSupportedKind;
+  errorMessage?: string;
+}
+
+export class FacilitatorService {
+  private cachedFeePayer: string | null = null;
+  private lastCheckedTimestamp = 0;
+  private readonly CACHE_TTL_MS = 60_000; // 1 minute
+
+  constructor(private readonly facilitatorUrl: string) {}
+
+  public getFacilitatorUrl(): string {
+    return this.facilitatorUrl;
+  }
+
+  /**
+   * Queries /supported and parses facilitator compatibility for Hedera Testnet x402 exact.
+   */
+  public async getSupported(): Promise&lt;FacilitatorCheckResult&gt; {
+    const now = Date.now();
+    if (this.cachedFeePayer &amp;&amp; now - this.lastCheckedTimestamp &lt; this.CACHE_TTL_MS) {
+      return { isCompatible: true, feePayer: this.cachedFeePayer };
+    }
+
+    try {
+      const resp = await fetch(`${this.facilitatorUrl.replace(/\/+$/, "")}/supported`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!resp.ok) {
+        return {
+          isCompatible: false,
+          feePayer: DEFAULT_FACILITATOR_FEE_PAYER,
+          errorMessage: `Facilitator returned HTTP ${resp.status} on /supported`,
+        };
+      }
+
+      const body = (await resp.json()) as FacilitatorSupportedResponse;
+      const parsed = this.parseSupportedResponse(body);
+
+      if (parsed.isCompatible &amp;&amp; parsed.feePayer) {
+        this.cachedFeePayer = parsed.feePayer;
+        this.lastCheckedTimestamp = now;
+      }
+
+      return parsed;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        isCompatible: false,
+        feePayer: DEFAULT_FACILITATOR_FEE_PAYER,
+        errorMessage: `Failed to query facilitator /supported: ${msg}`,
+      };
+    }
+  }
+
+  /**
+   * Pure parser validating facilitator supported kind for hedera:testnet exact.
+   */
+  public parseSupportedResponse(response: FacilitatorSupportedResponse): FacilitatorCheckResult {
+    if (!response || !Array.isArray(response.kinds)) {
+      return {
+        isCompatible: false,
+        feePayer: DEFAULT_FACILITATOR_FEE_PAYER,
+        errorMessage: "Invalid facilitator response format: missing kinds array",
+      };
+    }
+
+    const matchingKind = response.kinds.find(
+      (k) =&gt;
+        k.x402Version === X402_VERSION &amp;&amp;
+        k.scheme === SCHEME_EXACT &amp;&amp;
+        k.network === HEDERA_TESTNET_CAIP2
+    );
+
+    if (!matchingKind) {
+      return {
+        isCompatible: false,
+        feePayer: DEFAULT_FACILITATOR_FEE_PAYER,
+        errorMessage: `Facilitator does not support x402Version 2 exact scheme on ${HEDERA_TESTNET_CAIP2}`,
+      };
+    }
+
+    const feePayer =
+      matchingKind.extra?.feePayer ||
+      (response.signers &amp;&amp; response.signers["hedera:*"]?.[0]) ||
+      DEFAULT_FACILITATOR_FEE_PAYER;
+
+    if (!/^0\.0\.[1-9][0-9]*$/.test(feePayer)) {
+      return {
+        isCompatible: false,
+        feePayer: DEFAULT_FACILITATOR_FEE_PAYER,
+        errorMessage: `Facilitator advertised invalid Hedera fee-payer account ID: "${feePayer}"`,
+      };
+    }
+
+    return { isCompatible: true, feePayer, kind: matchingKind };
+  }
+
+  /**
+   * Dispatches payment payload to facilitator /verify endpoint.
+   */
+  public async verifyPayment(
+    paymentPayload: PaymentPayloadDoc,
+    requirements: PaymentRequirementDoc["accepts"][0]
+  ): Promise&lt;{ isValid: boolean; invalidReason?: string }&gt; {
+    try {
+      const resp = await fetch(`${this.facilitatorUrl.replace(/\/+$/, "")}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          x402Version: X402_VERSION,
+          paymentPayload,
+          paymentRequirements: requirements,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        return { isValid: false, invalidReason: `Facilitator verify returned HTTP ${resp.status}: ${text}` };
+      }
+
+      const data = (await resp.json()) as { isValid: boolean; invalidReason?: string };
+      return { isValid: !!data.isValid, invalidReason: data.invalidReason };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { isValid: false, invalidReason: `Facilitator verification call failed: ${msg}` };
+    }
+  }
+
+  /**
+   * Dispatches payment payload to facilitator /settle endpoint to submit on Hedera Testnet.
+   */
+  public async settlePayment(
+    paymentPayload: PaymentPayloadDoc,
+    requirements: PaymentRequirementDoc["accepts"][0]
+  ): Promise&lt;{ success: boolean; transactionId?: string; error?: string }&gt; {
+    try {
+      const resp = await fetch(`${this.facilitatorUrl.replace(/\/+$/, "")}/settle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          x402Version: X402_VERSION,
+          paymentPayload,
+          paymentRequirements: requirements,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        return { success: false, error: `Facilitator settlement returned HTTP ${resp.status}: ${text}` };
+      }
+
+      const data = (await resp.json()) as {
+        success: boolean; transaction?: string; transactionId?: string; error?: string;
+      };
+
+      const txId = data.transactionId || data.transaction;
+      return { success: !!data.success &amp;&amp; !!txId, transactionId: txId, error: data.error };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: `Facilitator settlement network error: ${msg}` };
+    }
+  }
+}</code></pre>
+</div>
+
+<!-- ======== FILE: reconciliation.service.ts ======== -->
+<div class="file-section" id="reconciliation-service">
+  <div class="file-header">
+    <span class="path">x402-service/src/services/reconciliation.service.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/services/reconciliation.service.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Independent on-chain verification via Hedera Mirror Node — normalizes transaction IDs, queries <code>/api/v1/transactions/{id}</code> with bounded retries, and validates exact debit/credit transfers.</div>
+  <pre><code class="language-typescript">import {
+  HASHSCAN_TESTNET_BASE_URL,
+  MAX_RECONCILIATION_ATTEMPTS,
+  RECONCILIATION_DELAY_MS,
+} from "../constants";
+
+export interface HederaTransferItem {
+  account: string;
+  amount: number;
+  is_approval?: boolean;
+}
+
+export interface HederaTransactionResponse {
+  transactions?: Array&lt;{
+    result: string;
+    consensus_timestamp: string;
+    transaction_id: string;
+    name: string;
+    transfers: HederaTransferItem[];
+    charged_tx_fee?: number;
+  }&gt;;
+}
+
+export interface ReconciliationResult {
+  isConfirmed: boolean;
+  transactionId: string;
+  consensusTimestamp: string;
+  payerAccount: string;
+  receiverAccount: string;
+  amountTinybars: number;
+  mirrorStatus: string;
+  hashscanUrl: string;
+  errorMessage?: string;
+}
+
+export class ReconciliationService {
+  constructor(private readonly mirrorNodeBaseUrl: string) {}
+
+  /**
+   * Normalizes Hedera transaction ID to canonical Mirror Node / HashScan format.
+   * e.g., "0.0.123@1700000000.123456789" -&gt; "0.0.123-1700000000-123456789"
+   */
+  public normalizeTransactionId(rawId: string): string {
+    const trimmed = rawId.trim();
+    if (trimmed.includes("@")) {
+      const [account, timePart] = trimmed.split("@");
+      const [seconds, nanos] = (timePart || "").split(".");
+      return `${account}-${seconds}-${nanos}`;
+    }
+    return trimmed;
+  }
+
+  /**
+   * Formats a canonical HashScan URL for Hedera Testnet.
+   * Never fabricates 0x EVM hashes.
+   */
+  public getHashScanUrl(transactionId: string): string {
+    const normalized = this.normalizeTransactionId(transactionId);
+    return `${HASHSCAN_TESTNET_BASE_URL}/${normalized}`;
+  }
+
+  /**
+   * Queries Hedera Mirror Node with bounded retries to handle indexing delay.
+   */
+  public async reconcileOnChain(
+    rawTransactionId: string,
+    expectedReceiver: string,
+    expectedTinybars: number,
+    expectedPayer?: string
+  ): Promise&lt;ReconciliationResult&gt; {
+    const normalizedTxId = this.normalizeTransactionId(rawTransactionId);
+    const hashscanUrl = this.getHashScanUrl(normalizedTxId);
+
+    let lastError = "";
+
+    for (let attempt = 1; attempt &lt;= MAX_RECONCILIATION_ATTEMPTS; attempt++) {
+      try {
+        const url = `${this.mirrorNodeBaseUrl.replace(/\/+$/, "")}/api/v1/transactions/${normalizedTxId}`;
+        const resp = await fetch(url, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(5000),
+        });
+
+        if (resp.status === 404) {
+          lastError = `Transaction ${normalizedTxId} not yet indexed on Mirror Node (attempt ${attempt}/${MAX_RECONCILIATION_ATTEMPTS})`;
+          if (attempt &lt; MAX_RECONCILIATION_ATTEMPTS) {
+            await new Promise((r) =&gt; setTimeout(r, RECONCILIATION_DELAY_MS));
+            continue;
+          }
+          break;
+        }
+
+        if (!resp.ok) { lastError = `Mirror node returned HTTP ${resp.status}`; break; }
+
+        const data = (await resp.json()) as HederaTransactionResponse;
+        const tx = data.transactions &amp;&amp; data.transactions[0];
+
+        if (!tx) { lastError = "Mirror Node returned empty transactions list"; break; }
+
+        if (tx.result !== "SUCCESS") {
+          return {
+            isConfirmed: false, transactionId: normalizedTxId,
+            consensusTimestamp: tx.consensus_timestamp || "",
+            payerAccount: expectedPayer || "", receiverAccount: expectedReceiver,
+            amountTinybars: expectedTinybars, mirrorStatus: tx.result, hashscanUrl,
+            errorMessage: `On-chain transaction execution failed with status: ${tx.result}`,
+          };
+        }
+
+        // Verify transfers list
+        const transfers = tx.transfers || [];
+        const receiverCredit = transfers.find(
+          (t) =&gt; t.account === expectedReceiver &amp;&amp; t.amount === expectedTinybars
+        );
+
+        if (!receiverCredit) {
+          return {
+            isConfirmed: false, transactionId: normalizedTxId,
+            consensusTimestamp: tx.consensus_timestamp,
+            payerAccount: expectedPayer || "", receiverAccount: expectedReceiver,
+            amountTinybars: expectedTinybars, mirrorStatus: tx.result, hashscanUrl,
+            errorMessage: `Hedera transfers list missing expected credit of ${expectedTinybars} tinybars to receiver ${expectedReceiver}`,
+          };
+        }
+
+        const payerDebit = transfers.find((t) =&gt;
+          expectedPayer
+            ? t.account === expectedPayer &amp;&amp; t.amount === -expectedTinybars
+            : t.amount === -expectedTinybars
+        );
+
+        if (!payerDebit) {
+          return {
+            isConfirmed: false, transactionId: normalizedTxId,
+            consensusTimestamp: tx.consensus_timestamp,
+            payerAccount: expectedPayer || "", receiverAccount: expectedReceiver,
+            amountTinybars: expectedTinybars, mirrorStatus: tx.result, hashscanUrl,
+            errorMessage: `Hedera transfers list missing debit of ${expectedTinybars} tinybars from payer`,
+          };
+        }
+
+        return {
+          isConfirmed: true, transactionId: normalizedTxId,
+          consensusTimestamp: tx.consensus_timestamp,
+          payerAccount: payerDebit.account, receiverAccount: receiverCredit.account,
+          amountTinybars: receiverCredit.amount, mirrorStatus: tx.result, hashscanUrl,
+        };
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err.message : String(err);
+        if (attempt &lt; MAX_RECONCILIATION_ATTEMPTS) {
+          await new Promise((r) =&gt; setTimeout(r, RECONCILIATION_DELAY_MS));
+        }
+      }
+    }
+
+    return {
+      isConfirmed: false, transactionId: normalizedTxId,
+      consensusTimestamp: "", payerAccount: expectedPayer || "",
+      receiverAccount: expectedReceiver, amountTinybars: expectedTinybars,
+      mirrorStatus: "INDEXING_TIMEOUT", hashscanUrl,
+      errorMessage: `Reconciliation delayed: ${lastError}`,
+    };
+  }
+}</code></pre>
+</div>
+
+<!-- ======== FILE: amount.ts ======== -->
+<div class="file-section" id="amount-utils">
+  <div class="file-header">
+    <span class="path">x402-service/src/utils/amount.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/utils/amount.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Tinybars ↔ HBAR conversion utilities — uses BigInt string-splitting to guarantee zero floating-point inaccuracies (1 HBAR = 100,000,000 tinybars).</div>
+  <pre><code class="language-typescript">import { TINYBARS_PER_HBAR } from "../constants";
+
+/**
+ * Validates and converts an integer tinybar count to a safe positive number.
+ * Fails closed on negative, zero, non-integer, or overflowing values.
+ */
+export function validateTinybarAmount(tinybars: unknown): number {
+  if (typeof tinybars === "bigint") {
+    if (tinybars &lt;= 0n) {
+      throw new TypeError("Tinybar amount must be strictly positive.");
+    }
+    if (tinybars &gt; BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new RangeError("Tinybar amount exceeds JavaScript MAX_SAFE_INTEGER.");
+    }
+    return Number(tinybars);
+  }
+
+  if (typeof tinybars === "number") {
+    if (!Number.isSafeInteger(tinybars) || tinybars &lt;= 0) {
+      throw new TypeError("Tinybar amount must be a positive safe integer.");
+    }
+    return tinybars;
+  }
+
+  if (typeof tinybars === "string") {
+    const trimmed = tinybars.trim();
+    if (!/^[1-9][0-9]*$/.test(trimmed)) {
+      throw new TypeError(`Invalid integer tinybar string format: "${tinybars}"`);
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isSafeInteger(parsed)) {
+      throw new RangeError("Tinybar string exceeds JavaScript safe integer range.");
+    }
+    return parsed;
+  }
+
+  throw new TypeError(`Unsupported tinybar amount type: ${typeof tinybars}`);
+}
+
+/**
+ * Converts a string or numeric HBAR amount to exact integer tinybars.
+ * 1 HBAR = 100,000,000 tinybars (8 decimal places).
+ * Uses string splitting to guarantee zero floating point inaccuracies.
+ */
+export function hbarToTinybars(hbar: string | number): number {
+  const hbarStr = typeof hbar === "number" ? hbar.toString() : hbar.trim();
+
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(hbarStr)) {
+    throw new TypeError(`Invalid HBAR amount format: "${hbar}"`);
+  }
+
+  const [wholePart, fracPart = ""] = hbarStr.split(".");
+  if (fracPart.length &gt; 8) {
+    throw new TypeError(`HBAR amount cannot have more than 8 decimal places: "${hbarStr}"`);
+  }
+
+  const paddedFrac = fracPart.padEnd(8, "0");
+  const tinybarsBigInt = BigInt(wholePart) * TINYBARS_PER_HBAR + BigInt(paddedFrac);
+
+  return validateTinybarAmount(tinybarsBigInt);
+}
+
+/**
+ * Converts integer tinybars to exact string HBAR with up to 8 decimal places.
+ */
+export function tinybarsToHbar(tinybars: number | bigint): string {
+  const safeTinybars = validateTinybarAmount(tinybars);
+  const tbBigInt = BigInt(safeTinybars);
+
+  const whole = tbBigInt / TINYBARS_PER_HBAR;
+  const remainder = tbBigInt % TINYBARS_PER_HBAR;
+
+  if (remainder === 0n) {
+    return whole.toString();
+  }
+
+  const remainderStr = remainder.toString().padStart(8, "0");
+  const trimmedRemainder = remainderStr.replace(/0+$/, "");
+  return `${whole}.${trimmedRemainder}`;
+}</code></pre>
+</div>
+
+<!-- ======== FILE: state-machine.service.ts ======== -->
+<div class="file-section" id="state-machine">
+  <div class="file-header">
+    <span class="path">x402-service/src/services/state-machine.service.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/services/state-machine.service.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Payment state machine governing the Hedera settlement lifecycle — enforces legal transitions from PAYMENT_REQUIRED through CONFIRMED or FAILED.</div>
+  <pre><code class="language-typescript">import { PaymentState } from "../types";
+
+export class PaymentStateMachine {
+  private static readonly ALLOWED_TRANSITIONS: Record&lt;PaymentState, PaymentState[]&gt; = {
+    PAYMENT_REQUIRED: ["PAYMENT_SUBMITTED", "EXPIRED"],
+    PAYMENT_SUBMITTED: ["VERIFYING", "FAILED"],
+    VERIFYING: ["SETTLING", "FAILED"],
+    SETTLING: ["SETTLEMENT_PENDING", "RECONCILIATION_REQUIRED", "CONFIRMED", "FAILED"],
+    SETTLEMENT_PENDING: ["RECONCILIATION_REQUIRED", "CONFIRMED", "FAILED"],
+    RECONCILIATION_REQUIRED: ["CONFIRMED", "FAILED"],
+    CONFIRMED: [], // Terminal success state
+    FAILED: ["PAYMENT_SUBMITTED"], // Can retry payment submission
+    EXPIRED: [], // Terminal state
+  };
+
+  public static canTransition(from: PaymentState, to: PaymentState): boolean {
+    if (from === to) { return true; }
+    const allowed = this.ALLOWED_TRANSITIONS[from] || [];
+    return allowed.includes(to);
+  }
+
+  public static assertValidTransition(from: PaymentState, to: PaymentState): void {
+    if (!this.canTransition(from, to)) {
+      throw new Error(
+        `Illegal payment state transition from "${from}" to "${to}". Permitted transitions: [${(
+          this.ALLOWED_TRANSITIONS[from] || []
+        ).join(", ")}]`
+      );
+    }
+  }
+
+  public static isTerminal(state: PaymentState): boolean {
+    return state === "CONFIRMED" || state === "EXPIRED";
+  }
+
+  public static permitsResponseUnlock(state: PaymentState): boolean {
+    return state === "CONFIRMED";
+  }
+}</code></pre>
+</div>
+
+<!-- ======== FILE: cli-payer.ts ======== -->
+<div class="file-section" id="cli-payer">
+  <div class="file-header">
+    <span class="path">x402-service/src/client/cli-payer.ts</span>
+    <a class="gh-link" href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo/blob/feature/perpay-hedera-x402/x402-service/src/client/cli-payer.ts" target="_blank">View on GitHub →</a>
+  </div>
+  <div class="file-desc">Interactive CLI client — walks the user through the full Hedera Testnet payment flow: fetches the 402 challenge, displays tinybars/HBAR cost, signs TransferTransaction with HederaTestnetSigner, submits, and displays the HashScan settlement proof.</div>
+  <pre><code class="language-typescript">import readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
+import {
+  HTTP_HEADER_PAYMENT_REQUIRED,
+  HTTP_HEADER_PAYMENT_RESPONSE,
+  HTTP_HEADER_PAYMENT_SIGNATURE,
+} from "../constants";
+import { PaymentRequirementDoc } from "../types";
+import { tinybarsToHbar } from "../utils/amount";
+import { HederaTestnetSigner } from "./hedera-signer";
+
+async function ask(rl: readline.Interface, query: string): Promise&lt;string&gt; {
+  try {
+    return await rl.question(query);
+  } catch {
+    return "";
+  }
+}
+
+export async function runCliPayer(): Promise&lt;void&gt; {
+  const rl = readline.createInterface({ input, output });
+
+  try {
+    console.log("\n=======================================================");
+    console.log(" PerPay x402 v2 Hedera Testnet Interactive CLI Payer");
+    console.log("=======================================================\n");
+
+    const defaultUrl = "http://localhost:4020/api/v1/generations/test_gen_1/result";
+    const userEnteredUrl =
+      process.argv[2] ||
+      (await ask(rl, `Enter PerPay Result URL [Press Enter for default: ${defaultUrl}]: `));
+
+    const targetUrl = userEnteredUrl.trim() || defaultUrl;
+
+    console.log(`\nQuerying protected endpoint: ${targetUrl}...`);
+
+    let initialResp: Response;
+    try {
+      initialResp = await fetch(targetUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(6000),
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`\n❌ Could not connect to ${targetUrl}: ${msg}`);
+      console.log("Tip: Please ensure the PerPay payment server is running (e.g. 'npm run dev').");
+      return;
+    }
+
+    if (initialResp.status === 200) {
+      console.log("\n✅ Result is already unlocked!");
+      const data = await initialResp.json();
+      console.log(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (initialResp.status === 404) {
+      console.log(`\n⚠️  No active invoice found for this generation URL (HTTP 404).`);
+      console.log("PerPay uses post-generation exact billing. A generation must be created first.");
+      console.log(`Tip: Test with the auto-seeded demo generation: ${defaultUrl}`);
+      return;
+    }
+
+    if (initialResp.status !== 402) {
+      console.error(`\nUnexpected HTTP response: ${initialResp.status}`);
+      console.error(await initialResp.text());
+      return;
+    }
+
+    const reqHeader = initialResp.headers.get(HTTP_HEADER_PAYMENT_REQUIRED);
+    if (!reqHeader) {
+      console.error(`HTTP 402 received but missing ${HTTP_HEADER_PAYMENT_REQUIRED} header.`);
+      return;
+    }
+
+    const reqDoc = JSON.parse(
+      Buffer.from(reqHeader, "base64").toString("utf-8")
+    ) as PaymentRequirementDoc;
+    const accept = reqDoc.accepts[0];
+
+    const amountTinybars = BigInt(accept.amount);
+    const amountHbar = tinybarsToHbar(amountTinybars);
+
+    console.log("\n--- PAYMENT REQUIREMENT DETAILS ---");
+    console.log(`Network:       ${accept.network}`);
+    console.log(`Scheme:        ${accept.scheme}`);
+    console.log(`Asset:         HBAR (${accept.asset})`);
+    console.log(`Amount:        ${amountTinybars.toString()} tinybars (${amountHbar} HBAR)`);
+    console.log(`Receiver:      ${accept.payTo}`);
+    console.log(`Fee Payer:     ${accept.extra.feePayer} (Sponsored by Facilitator)`);
+    console.log(`Resource:      ${reqDoc.resource.description}`);
+    console.log("------------------------------------\n");
+
+    let payerId = process.env.TESTNET_SMOKE_PAYER_ID;
+    if (!payerId) {
+      payerId = await ask(rl, "Enter Payer Hedera Account ID (e.g. 0.0.12345): ");
+    }
+
+    let payerKey = process.env.TESTNET_SMOKE_PAYER_KEY;
+    if (!payerKey) {
+      payerKey = await ask(rl, "Enter Payer Private Key (DER or Hex): ");
+    }
+
+    if (!payerId.trim() || !payerKey.trim()) {
+      console.log("\n⚠️  Payer credentials were not entered. Payment signing canceled.");
+      console.log("Tip: You can get free testnet credentials from https://portal.hedera.com");
+      return;
+    }
+
+    const approval = await ask(
+      rl,
+      `\nAUTHORIZE PAYMENT: Transfer ${amountTinybars.toString()} tinybars to ${accept.payTo}? [yes/no]: `
+    );
+
+    if (approval.trim().toLowerCase() !== "yes") {
+      console.log("\nPayment canceled by user.");
+      return;
+    }
+
+    console.log("\nSigning Hedera Testnet TransferTransaction...");
+    let signer: HederaTestnetSigner;
+    try {
+      signer = new HederaTestnetSigner({
+        payerAccountId: payerId.trim(),
+        payerPrivateKey: payerKey.trim(),
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`\n❌ Failed to initialize Hedera signer: ${msg}`);
+      console.log("Tip: Verify your Hedera private key format (DER or Hex) from https://portal.hedera.com");
+      return;
+    }
+
+    let signatureHeader: string;
+    try {
+      signatureHeader = await signer.createPaymentSignatureHeader(accept);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`\n❌ Transaction signing failed: ${msg}`);
+      signer.close();
+      return;
+    }
+    signer.close();
+
+    console.log("Submitting x402 payment signature to resource server...");
+    let unlockResp: Response;
+    try {
+      unlockResp = await fetch(targetUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          [HTTP_HEADER_PAYMENT_SIGNATURE]: signatureHeader,
+        },
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`\n❌ Unlock request network error: ${msg}`);
+      return;
+    }
+
+    console.log(`\nServer Response: HTTP ${unlockResp.status}`);
+    const unlockData = await unlockResp.json();
+    console.log("\nResponse Body:\n", JSON.stringify(unlockData, null, 2));
+
+    const paymentResponseHeader = unlockResp.headers.get(HTTP_HEADER_PAYMENT_RESPONSE);
+    if (paymentResponseHeader) {
+      const proof = JSON.parse(
+        Buffer.from(paymentResponseHeader, "base64").toString("utf-8")
+      );
+      console.log("\n--- SETTLEMENT PROOF ---");
+      console.log(`Transaction ID:  ${proof.transaction}`);
+      console.log(`HashScan Link:   ${proof.transactionUrl}`);
+      console.log("------------------------");
+    }
+  } finally {
+    rl.close();
+  }
+}
+
+if (require.main === module) {
+  runCliPayer().catch((err) =&gt; {
+    console.error("CLI Payer Error:", err);
+  });
+}</code></pre>
+</div>
+
+<!-- ======== FOOTER ======== -->
+</div>
+<footer>
+  <p>Extracted from <a href="https://github.com/Aditya2377-cmd/ETHGlobal-Repo" target="_blank">Aditya2377-cmd/ETHGlobal-Repo</a> — branch <code>feature/perpay-hedera-x402</code></p>
+  <p>Built at ETHGlobal · Hedera Testnet · x402 v2 Protocol</p>
+</footer>
+
+<script>hljs.highlightAll();</script>
+</body>
+</html>
