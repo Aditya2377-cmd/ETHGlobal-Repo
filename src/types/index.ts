@@ -162,6 +162,10 @@ export interface UserAccount {
   total_requests: number;
   total_tokens_consumed: number;
   total_hbar_spent: number;
+  last_debit_hbar?: number;
+  last_debit_tinybars?: number;
+  last_debit_tx?: string;
+  last_debit_time?: string;
 }
 
 export type ActiveScreen =

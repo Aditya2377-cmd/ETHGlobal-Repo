@@ -208,6 +208,69 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content = ''
       continue;
     }
 
+    // Markdown Images: ![alt](url)
+    const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imageMatch) {
+      flushList();
+      const altText = imageMatch[1] || 'Generated Visual Output';
+      const imageUrl = imageMatch[2];
+      elements.push(
+        <div
+          key={`img_${blockIndex++}`}
+          style={{
+            margin: '24px 0',
+            border: '2px solid #0F172A',
+            padding: '16px',
+            backgroundColor: '#F8FAFC',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+          }}
+        >
+          <img
+            src={imageUrl}
+            alt={altText}
+            loading="lazy"
+            style={{
+              width: '100%',
+              maxHeight: '620px',
+              objectFit: 'contain',
+              display: 'block',
+              backgroundColor: '#0F172A',
+              border: '1.5px solid #CBD5E1',
+            }}
+          />
+          <div
+            style={{
+              marginTop: '12px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '15px',
+              color: '#334155',
+              fontWeight: 700,
+              flexWrap: 'wrap',
+              gap: '10px',
+            }}
+          >
+            <span>🖼️ {altText}</span>
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#1D4ED8',
+                textDecoration: 'underline',
+                fontWeight: 700,
+                fontSize: '14px',
+              }}
+            >
+              Open Full Resolution Image ↗
+            </a>
+          </div>
+        </div>
+      );
+      continue;
+    }
+
     // 2. Headings
     if (trimmed.startsWith('# ')) {
       flushList();

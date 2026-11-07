@@ -168,7 +168,7 @@ export const Header: React.FC = () => {
                 border: '1.5px solid #A7F3D0',
               }}
             >
-              {userAccount.testnet_balance_hbar.toFixed(2)} ℏ
+              {userAccount.testnet_balance_hbar.toFixed(4)} ℏ
             </span>
           </button>
         ) : (

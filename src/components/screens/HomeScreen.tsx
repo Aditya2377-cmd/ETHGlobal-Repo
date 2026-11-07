@@ -157,6 +157,33 @@ export const HomeScreen: React.FC = () => {
           <p style={{ fontSize: '16px', color: '#475569', marginTop: '6px' }}>
             Usage charges are debited post-generation in exact tinybars settled via Hedera consensus.
           </p>
+
+          {userAccount?.last_debit_hbar !== undefined && (
+            <div
+              style={{
+                marginTop: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                backgroundColor: '#ECFDF5',
+                border: '1.5px solid #10B981',
+                color: '#065F46',
+                fontSize: '14px',
+                fontWeight: 700,
+              }}
+            >
+              <CheckCircle size={16} color="#059669" />
+              <span>
+                Last Transaction Debited: -{userAccount.last_debit_hbar.toFixed(8)} ℏ ({userAccount.last_debit_tinybars?.toLocaleString()} tinybars)
+              </span>
+              {userAccount.total_hbar_spent > 0 && (
+                <span style={{ color: '#047857', borderLeft: '1px solid #A7F3D0', paddingLeft: '8px', marginLeft: '4px' }}>
+                  Total Spent: {userAccount.total_hbar_spent.toFixed(8)} ℏ
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
