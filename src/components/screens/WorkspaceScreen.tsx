@@ -18,11 +18,13 @@ export const WorkspaceScreen: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
   const [maxTokens, setMaxTokens] = useState(1024);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedModel = getModelById(selectedModelId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!prompt.trim() || isSubmitting) return;
 
     if (userAccount?.has_unpaid_invoice && userAccount.unpaid_invoice_id) {
@@ -34,7 +36,13 @@ export const WorkspaceScreen: React.FC = () => {
       setIsSubmitting(true);
       await submitPrompt(prompt.trim(), selectedModelId, maxTokens);
     } catch (err: any) {
-      console.error(err);
+      console.error('Workspace prompt submission error:', err);
+      const isCors = /failed to fetch|network|cors|access-control/i.test(err?.message || '');
+      const msg = isCors
+        ? 'Network / CORS error: Unable to reach AI Gateway. The server may be offline or blocking cross-origin requests.'
+        : (err?.message || 'Failed to submit question to AI Gateway. Please try again.');
+      setError(msg);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -88,6 +96,51 @@ export const WorkspaceScreen: React.FC = () => {
         </div>
       )}
 
+      {/* UI Error State Banner */}
+      {error && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: '28px',
+            backgroundColor: '#FEE2E2',
+            border: '2px solid #DC2626',
+            padding: '20px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <AlertCircle size={26} color="#DC2626" style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '17px', color: '#991B1B' }}>
+                Question Submission Failed
+              </div>
+              <div style={{ fontSize: '15px', color: '#B91C1C', marginTop: '4px', lineHeight: 1.5 }}>
+                {error}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="fin-btn"
+            style={{
+              border: '2px solid #DC2626',
+              fontSize: '15px',
+              padding: '10px 18px',
+              backgroundColor: '#FFFFFF',
+              color: '#991B1B',
+              fontWeight: 700,
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Workspace Form */}
       <form onSubmit={handleSubmit} className="fin-card" style={{ padding: '36px', marginBottom: '32px', border: '2px solid #0F172A' }}>
         {/* Model Selection & Limit Controls */}
@@ -111,7 +164,7 @@ export const WorkspaceScreen: React.FC = () => {
               disabled={isSubmitting || userAccount?.has_unpaid_invoice}
               style={{ fontSize: '17px', padding: '14px 18px', border: '2px solid #0F172A' }}
             >
-              {AVAILABLE_MODELS.map((model) => (
+              {(AVAILABLE_MODELS || []).map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.name} — {model.provider}
                 </option>
@@ -197,10 +250,10 @@ export const WorkspaceScreen: React.FC = () => {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {[
+                'Explain robotics in three concise bullet points.',
+                'Explain the difference between HBAR and tinybars in two sentences.',
                 'Analyze Hedera Hashgraph consensus mechanism and tinybar tokenomics',
                 'Write an x402 v2 payment verification module in TypeScript',
-                'Summarize Groq LPU inference latency vs GPU clusters',
-                'Design an automated cryptoTransfer escrow settlement contract',
               ].map((template) => (
                 <button
                   key={template}

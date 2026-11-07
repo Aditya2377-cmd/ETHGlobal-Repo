@@ -12,6 +12,7 @@ import {
   Clock,
   Cpu,
 } from 'lucide-react';
+import { MarkdownRenderer } from '../common/MarkdownRenderer';
 
 export const UnlockedResponseScreen: React.FC = () => {
   const { currentUnlockedResponse, navigateTo } = useApp();
@@ -101,10 +102,10 @@ export const UnlockedResponseScreen: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <span className="fin-badge fin-badge-neutral font-mono" style={{ fontSize: '14px' }}>
-                {currentUnlockedResponse.model}
+                {currentUnlockedResponse.model || 'AI Model'}
               </span>
               <span className="fin-badge fin-badge-hedera" style={{ fontSize: '14px' }}>
-                {currentUnlockedResponse.total_tokens.toLocaleString()} tokens
+                {(currentUnlockedResponse.total_tokens ?? 0).toLocaleString()} tokens
               </span>
             </div>
             <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A' }}>
@@ -146,26 +147,21 @@ export const UnlockedResponseScreen: React.FC = () => {
             ORIGINAL PROMPT
           </div>
           <div style={{ fontSize: '18px', color: '#0F172A', lineHeight: 1.6, fontWeight: 500 }}>
-            {currentUnlockedResponse.prompt}
+            {currentUnlockedResponse.prompt || 'Original prompt record'}
           </div>
         </div>
 
-        {/* Rendered AI Output Body (Very Large & Clear Times New Roman) */}
+        {/* Rendered AI Output Body with Safe Markdown Formatting */}
         <div
           style={{
-            fontSize: '24px',
-            lineHeight: 1.9,
-            color: '#0F172A',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'var(--font-sans)',
             backgroundColor: '#FFFFFF',
-            padding: '40px',
+            padding: '36px 40px',
             border: '2px solid #0F172A',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
             overflowX: 'auto',
           }}
         >
-          {currentUnlockedResponse.response_text}
+          <MarkdownRenderer content={currentUnlockedResponse.response_text || ''} />
         </div>
       </div>
 
@@ -189,7 +185,7 @@ export const UnlockedResponseScreen: React.FC = () => {
               TRANSACTION ID
             </div>
             <div className="font-mono" style={{ fontSize: '15px', color: '#0F172A', marginTop: '6px', wordBreak: 'break-all', fontWeight: 700 }}>
-              {currentUnlockedResponse.transaction_id}
+              {currentUnlockedResponse.transaction_id || 'Pending Reconciliation'}
             </div>
           </div>
 
@@ -198,7 +194,7 @@ export const UnlockedResponseScreen: React.FC = () => {
               FINAL CHARGE
             </div>
             <div className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#047857', marginTop: '6px' }}>
-              {currentUnlockedResponse.charge_hbar.toFixed(6)} ℏ ({currentUnlockedResponse.charge_tinybars.toLocaleString()} tinybars)
+              {(currentUnlockedResponse.charge_hbar ?? 0).toFixed(8)} ℏ ({(currentUnlockedResponse.charge_tinybars ?? 0).toLocaleString()} tinybars)
             </div>
           </div>
 
@@ -207,7 +203,7 @@ export const UnlockedResponseScreen: React.FC = () => {
               TOKEN BREAKDOWN
             </div>
             <div className="font-mono" style={{ fontSize: '16px', color: '#0F172A', marginTop: '6px', fontWeight: 700 }}>
-              {currentUnlockedResponse.prompt_tokens} in / {currentUnlockedResponse.completion_tokens} out ({currentUnlockedResponse.total_tokens} total)
+              {currentUnlockedResponse.prompt_tokens ?? 0} in / {currentUnlockedResponse.completion_tokens ?? 0} out ({(currentUnlockedResponse.total_tokens ?? 0)} total)
             </div>
           </div>
 

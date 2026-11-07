@@ -231,7 +231,7 @@ export const PhoneAppPreview: React.FC = () => {
                   Select Model:
                 </span>
                 <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
-                  {AVAILABLE_MODELS.map((m) => {
+                  {(AVAILABLE_MODELS || []).map((m) => {
                     const isSel = m.id === selectedModelId;
                     return (
                       <div
@@ -299,7 +299,7 @@ export const PhoneAppPreview: React.FC = () => {
           {/* Tab 2: Recent History inside Phone Frame */}
           {activeTab === 'history' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {transactions.slice(0, 5).map((tx) => (
+              {(transactions || []).slice(0, 5).map((tx) => (
                 <div
                   key={tx.event_id}
                   style={{

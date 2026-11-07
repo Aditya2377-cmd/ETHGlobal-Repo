@@ -44,3 +44,5 @@ ledger.db
 
 # Temporary extraction folder
 my-universe-extracted/
+
+.vercel

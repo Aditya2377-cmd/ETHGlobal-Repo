@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import type { DatabaseInstance } from "./sqlite";
 import {
   OutboxEventRecord,
   PaymentAttemptRecord,
@@ -9,7 +9,7 @@ import {
 } from "../types";
 
 export class PaymentRepository {
-  constructor(private db: Database.Database) {}
+  constructor(private db: DatabaseInstance) {}
 
   public saveInvoice(invoice: TrustedInvoiceContext): void {
     const stmt = this.db.prepare(`
@@ -166,7 +166,7 @@ export class PaymentRepository {
       ORDER BY next_attempt_at ASC
       LIMIT ?
     `);
-    return stmt.all(now, limit) as OutboxEventRecord[];
+    return stmt.all(now, limit) as unknown as OutboxEventRecord[];
   }
 
   public markOutboxEventSent(eventId: string): void {

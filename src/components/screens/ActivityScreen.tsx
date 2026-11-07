@@ -18,12 +18,13 @@ export const ActivityScreen: React.FC = () => {
   const [modelFilter, setModelFilter] = useState<string>('ALL');
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
+    return (transactions || []).filter((tx) => {
+      if (!tx) return false;
       const matchesSearch =
-        tx.invoice_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.request_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.prompt_snippet.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.transaction_id.toLowerCase().includes(searchQuery.toLowerCase());
+        (tx.invoice_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.request_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.prompt_snippet || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus =
         statusFilter === 'ALL' || tx.payment_status === statusFilter;
@@ -36,9 +37,9 @@ export const ActivityScreen: React.FC = () => {
   }, [transactions, searchQuery, statusFilter, modelFilter]);
 
   const exportCSV = () => {
-    if (filteredTransactions.length === 0) return;
+    if (!filteredTransactions || filteredTransactions.length === 0) return;
     const headers = ['Timestamp', 'Request ID', 'Invoice ID', 'Model', 'Prompt', 'Total Tokens', 'HBAR Charge', 'Tinybars', 'Transaction ID', 'Status'];
-    const rows = filteredTransactions.map((tx) => [
+    const rows = (filteredTransactions || []).map((tx) => [
       tx.timestamp,
       tx.request_id,
       tx.invoice_id,
@@ -164,7 +165,7 @@ export const ActivityScreen: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((tx) => (
+              {(filteredTransactions || []).map((tx) => (
                 <tr key={tx.event_id} style={{ borderBottom: '1px solid #CBD5E1' }}>
                   <td className="font-mono" style={{ whiteSpace: 'nowrap', fontSize: '14px', color: '#475569', padding: '18px 20px' }}>
                     {new Date(tx.timestamp).toLocaleString([], {
@@ -196,7 +197,8 @@ export const ActivityScreen: React.FC = () => {
                     {tx.total_tokens.toLocaleString()}
                   </td>
                   <td className="font-mono" style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '15px', padding: '18px 20px' }}>
-                    {tx.charge_hbar.toFixed(6)} ℏ
+                    {tx.charge_hbar.toFixed(8)} ℏ
+                    <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>{tx.charge_tinybars.toLocaleString()} tinybars</div>
                   </td>
                   <td style={{ padding: '18px 20px' }}>
                     <a

@@ -5,9 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:frontend": "vite",
+    "dev:gateway": "python -m uvicorn gateway.main:app --host 127.0.0.1 --port 8000",
+    "dev:x402": "npm --prefix x402-service run dev",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node --test tests/perpay.test.mjs"
+    "test": "node --test tests/perpay.test.mjs",
+    "test:frontend": "node --test tests/perpay.test.mjs",
+    "test:gateway": "python -m unittest gateway/tests/test_payper_backend.py",
+    "test:x402": "npm --prefix x402-service test"
   },
   "dependencies": {
     "react": "^18.3.1",

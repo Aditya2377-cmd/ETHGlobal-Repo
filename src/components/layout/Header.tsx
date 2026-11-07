@@ -85,6 +85,29 @@ export const Header: React.FC = () => {
           />
           Usage-Based AI Gateway
         </span>
+
+        {/* Hedera Code Showcase Link */}
+        <a
+          href="./hedera-code.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fin-badge hide-on-mobile"
+          style={{
+            backgroundColor: '#0F172A',
+            color: '#00E39E',
+            border: '2px solid #00E39E',
+            fontSize: '13px',
+            padding: '7px 14px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          <span>⚡ Hedera Code</span>
+        </a>
       </div>
 
       {/* Right Controls */}
@@ -115,27 +138,6 @@ export const Header: React.FC = () => {
               <span>📱 Mobile App View</span>
             </>
           )}
-        </button>
-
-        {/* Palette Switcher */}
-        <button
-          onClick={togglePaletteMode}
-          className="fin-btn fin-btn-secondary hide-on-mobile"
-          title="Cycle through vibrant procedural universe color spectrums"
-          style={{
-            fontSize: '14px',
-            padding: '10px 16px',
-            border: '2px solid #0F172A',
-            fontWeight: 700,
-            backgroundColor: '#FFFFFF',
-          }}
-        >
-          <Sparkles size={16} color="#D97706" />
-          <span>
-            {paletteMode === 'spectrum' && '✨ Multi-Color'}
-            {paletteMode === 'perpay' && '🌲 Emerald/Amber'}
-            {paletteMode === 'codepen' && '🌈 Classic Sweep'}
-          </span>
         </button>
 
         {/* Wallet Pill */}
