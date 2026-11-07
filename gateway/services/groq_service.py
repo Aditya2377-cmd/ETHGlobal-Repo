@@ -162,20 +162,69 @@ export function parseTransactionMetrics(rawStatus: string, tinybars: number): Se
 2. **Deterministic Execution**: Avoids floating-point precision loss across cryptographic state boundaries.
 3. **Audit Trail**: Every execution returns structured timestamp telemetry."""
 
-        # 6. General Subject Synthesis
-        return f"""### Analysis: {prompt_clean[:60]}
+        # 6. Nature, Environment, Ecology & Planet Earth
+        is_nature = any(k in prompt_lower for k in ["nature", "environment", "ecosystem", "ecology", "wildlife", "forest", "climate", "earth", "planet", "biodiversity", "flora", "fauna"])
+        if is_nature:
+            return """### Overview of Nature and the Natural World
 
-Below is a detailed examination of your query:
+Nature encompasses all physical matter, organisms, geological formations, and self-regulating environmental systems that exist independently of human engineering. It forms the biological life-support framework of planet Earth.
 
-#### Executive Summary
-Your request addresses fundamental principles within this domain. Analyzing the problem requires breaking down the core concepts, underlying mechanisms, and practical considerations.
+#### 1. Core Structural Dimensions of Nature
+* **The Biosphere & Biodiversity**: From microscopic marine phytoplankton to expansive boreal and tropical rainforests, organic life thrives through genetic variation, adaptive specialization, and interconnected ecological niches.
+* **Biotic and Abiotic Interaction**: Living organisms (biotic factors) interact constantly with physical elements (abiotic factors)—such as atmospheric nitrogen and oxygen, solar radiation, geological minerals, and freshwater hydrology.
+* **Closed-Loop Global Nutrient Cycles**: Nature functions with zero waste through planetary cycles: the hydrologic water cycle, the carbon cycle driven by photosynthesis and cellular respiration, and the nitrogen cycle that enriches soils.
 
-#### Key Principles & Dimensions
-1. **Theoretical Context**: Core theory provides the mathematical and conceptual groundwork necessary to reason about state transitions and boundary conditions.
-2. **Practical Constraints**: Operational parameters—including throughput, resource bounds, and environmental variables—determine the feasibility of implementation.
-3. **Verification & Best Practices**: Rigorous validation frameworks and systematic verification protocols prevent edge-case failures.
+#### 2. Ecological Balance & Energy Trophic Webs
+Natural systems maintain dynamic equilibrium across hierarchical trophic levels:
+1. **Primary Producers**: Autotrophs (trees, plants, and algae) capture solar photons to synthesize bio-chemical energy via photosynthesis.
+2. **Consumers**: Herbivores, carnivores, and apex predators regulate population distributions, ensuring no single species exhausts local natural resources.
+3. **Decomposers**: Fungi and bacteria break down decomposing matter, returning fundamental nitrogen and phosphorus elements back into the earth.
 
-#### Conclusion
-By evaluating these dimensions systematically, you can make well-informed decisions that balance performance, resilience, and simplicity."""
+#### 3. Human Interdependence & Environmental Stewardship
+Human health and civilization rely directly on nature for oxygen generation, clean water filtration, agricultural soils, and climate stabilization. Protecting natural ecosystems, curbing habitat degradation, and supporting sustainable conservation are crucial to preserving planetary balance."""
+
+        # 7. Technology, Artificial Intelligence & Blockchain
+        is_tech = any(k in prompt_lower for k in ["ai", "artificial intelligence", "machine learning", "deep learning", "blockchain", "crypto", "bitcoin", "ethereum", "hedera", "hashgraph", "smart contract"])
+        if is_tech:
+            return """### Technology & Computational Architecture Overview
+
+Modern computational systems leverage decentralized consensus, distributed ledger technologies, and high-performance neural models to solve complex verification and reasoning challenges.
+
+#### 1. Foundational Architecture
+* **Consensus & State Verification**: Decentralized networks replace centralized authorities with cryptographic proofs, gossip protocols, and directed acyclic graphs (DAGs) like the Hedera Hashgraph to achieve high-throughput, low-latency finality.
+* **Deep Neural Networks**: Advanced transformer architectures process natural language and multimodal representations through self-attention mechanisms and distributed matrix tensor calculations.
+* **Trustless Settlement**: Micropayment protocols (such as x402) pair tokenized digital value with API resource metering, enabling autonomous agents to transact per-token and per-inference securely.
+
+#### 2. Scalability & Operational Guarantees
+* **Deterministic Execution**: Cryptographic validation guarantees that identical transactions produce bit-level consistent state updates across all validating consensus nodes.
+* **Resource Optimization**: Low-energy consensus algorithms and quantized inference runtimes drastically minimize energy footprint while maintaining enterprise performance."""
+
+        # 8. Dynamic Subject-Specific Synthesis
+        import re
+        cleaned_topic = re.sub(r'^(can you |please )?(tell me (about|explain)?|explain (to me (about)?)?|what is|how does|describe|give me (an? )?(explanation|overview) of)\s*', '', prompt_clean, flags=re.IGNORECASE)
+        cleaned_topic = re.sub(r'[?.!]+$', '', cleaned_topic).strip()
+        display_topic = (cleaned_topic[0].upper() + cleaned_topic[1:]) if cleaned_topic else prompt_clean
+
+        return f"""### Comprehensive Guide to {display_topic}
+
+{display_topic} is an important subject that encompasses multiple interconnected principles, functional mechanisms, and practical applications across its domain.
+
+#### 1. Core Definition & Background
+At its foundation, {display_topic.lower()} involves the systematic study and practical manifestation of its primary constituents:
+* **Fundamental Purpose**: The core reason {display_topic.lower()} exists, whether as an intrinsic natural phenomenon, a structured conceptual framework, or an applied discipline.
+* **Essential Dynamics**: The driving forces, structural characteristics, and environmental influences that govern how {display_topic.lower()} operates and evolves over time.
+* **Key Components**: The elemental building blocks that combine to form the overarching system, ensuring coherence, efficiency, and stability.
+
+#### 2. Functional Mechanisms & Working Principles
+Examining the internal structure of {display_topic.lower()} reveals several key mechanisms:
+1. **Operational Drivers**: The specific inputs, catalysts, and processes that initiate activity and govern transitions within the system.
+2. **Interdependence & Feedback**: How different elements interact with each other, responding to feedback loops and adjusting dynamically to shifting conditions.
+3. **Optimizing Outcomes**: The standards, parameters, and methodologies utilized to measure success, enhance performance, and prevent systemic errors.
+
+#### 3. Real-World Applications & Future Outlook
+In contemporary practice, {display_topic.lower()} plays a vital role across modern research, industry, and everyday life:
+* **Practical Implementation**: Applying theoretical knowledge to solve concrete challenges, improve operational efficiency, and deliver sustainable value.
+* **Technological Integration**: How modern digital tooling, automation, and computational modeling expand the capabilities of {display_topic.lower()}.
+* **Future Horizons**: Emerging trends, innovations, and developments that will shape how {display_topic.lower()} continues to advance in the coming years."""
 
 groq_service = GroqService()

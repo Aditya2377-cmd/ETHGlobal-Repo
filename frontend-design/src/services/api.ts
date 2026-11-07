@@ -692,21 +692,92 @@ export function parseTransactionMetrics(rawStatus: string, tinybars: number): Se
 3. **Audit Trail**: Every execution returns structured timestamp telemetry.`;
     }
 
-    // 6. General Subject Synthesis
-    return `### Analysis: ${promptClean.slice(0, 60)}
+    // 6. Nature, Environment, Ecology & Planet Earth
+    const isNature = /nature|environment|ecosystem|ecology|wildlife|forest|climate|earth|planet|biodiversity|flora|fauna/i.test(promptLower);
+    if (isNature) {
+      return `### Overview of Nature and the Natural World
 
-Below is a detailed examination of your query:
+Nature encompasses all physical matter, organisms, geological formations, and self-regulating environmental systems that exist independently of human engineering. It forms the biological life-support framework of planet Earth.
 
-#### Executive Summary
-Your request addresses fundamental principles within this domain. Analyzing the problem requires breaking down the core concepts, underlying mechanisms, and practical considerations.
+#### 1. Core Structural Dimensions of Nature
+* **The Biosphere & Biodiversity**: From microscopic marine phytoplankton to expansive boreal and tropical rainforests, organic life thrives through genetic variation, adaptive specialization, and interconnected ecological niches.
+* **Biotic and Abiotic Interaction**: Living organisms (biotic factors) interact constantly with physical elements (abiotic factors)—such as atmospheric nitrogen and oxygen, solar radiation, geological minerals, and freshwater hydrology.
+* **Closed-Loop Global Nutrient Cycles**: Nature functions with zero waste through planetary cycles: the hydrologic water cycle, the carbon cycle driven by photosynthesis and cellular respiration, and the nitrogen cycle that enriches soils.
 
-#### Key Principles & Dimensions
-1. **Theoretical Context**: Core theory provides the mathematical and conceptual groundwork necessary to reason about state transitions and boundary conditions.
-2. **Practical Constraints**: Operational parameters—including throughput, resource bounds, and environmental variables—determine the feasibility of implementation.
-3. **Verification & Best Practices**: Rigorous validation frameworks and systematic verification protocols prevent edge-case failures.
+#### 2. Ecological Balance & Energy Trophic Webs
+Natural systems maintain dynamic equilibrium across hierarchical trophic levels:
+1. **Primary Producers**: Autotrophs (trees, plants, and algae) capture solar photons to synthesize bio-chemical energy via photosynthesis.
+2. **Consumers**: Herbivores, carnivores, and apex predators regulate population distributions, ensuring no single species exhausts local natural resources.
+3. **Decomposers**: Fungi and bacteria break down decomposing matter, returning fundamental nitrogen and phosphorus elements back into the earth.
 
-#### Conclusion
-By evaluating these dimensions systematically, you can make well-informed decisions that balance performance, resilience, and simplicity.`;
+#### 3. Human Interdependence & Environmental Stewardship
+Human health and civilization rely directly on nature for oxygen generation, clean water filtration, agricultural soils, and climate stabilization. Protecting natural ecosystems, curbing habitat degradation, and supporting sustainable conservation are crucial to preserving planetary balance.`;
+    }
+
+    // 7. Technology, Artificial Intelligence & Blockchain
+    const isTech = /ai|artificial intelligence|machine learning|deep learning|blockchain|crypto|bitcoin|ethereum|hedera|hashgraph|smart contract/i.test(promptLower);
+    if (isTech) {
+      return `### Technology & Computational Architecture Overview
+
+Modern computational systems leverage decentralized consensus, distributed ledger technologies, and high-performance neural models to solve complex verification and reasoning challenges.
+
+#### 1. Foundational Architecture
+* **Consensus & State Verification**: Decentralized networks replace centralized authorities with cryptographic proofs, gossip protocols, and directed acyclic graphs (DAGs) like the Hedera Hashgraph to achieve high-throughput, low-latency finality.
+* **Deep Neural Networks**: Advanced transformer architectures process natural language and multimodal representations through self-attention mechanisms and distributed matrix tensor calculations.
+* **Trustless Settlement**: Micropayment protocols (such as x402) pair tokenized digital value with API resource metering, enabling autonomous agents to transact per-token and per-inference securely.
+
+#### 2. Scalability & Operational Guarantees
+* **Deterministic Execution**: Cryptographic validation guarantees that identical transactions produce bit-level consistent state updates across all validating consensus nodes.
+* **Resource Optimization**: Low-energy consensus algorithms and quantized inference runtimes drastically minimize energy footprint while maintaining enterprise performance.`;
+    }
+
+    // 8. Science, Physics & Space
+    const isScience = /physics|chemistry|biology|quantum|gravity|astronomy|cosmos|space|galaxy|star|energy/i.test(promptLower);
+    if (isScience) {
+      return `### Scientific Fundamentals & Physical Principles
+
+Modern empirical science unifies observational measurement with theoretical models to explain the fundamental laws governing matter, energy, and cosmic structures.
+
+#### 1. Fundamental Physical Forces
+* **Gravitation & General Relativity**: Spacetime curvature dictates the motion of macroscopic celestial bodies, galaxies, and black holes.
+* **Electromagnetism**: Governs light, electron interactions, chemical bonding, and computational circuits.
+* **Quantum Mechanics**: Describes the probabilistic behavior of subatomic particles, wave-particle duality, and quantum superposition.
+
+#### 2. Empirical Methodology & Discovery
+1. **Hypothesis & Controlled Observation**: Testing theoretical predictions against repeatable experimental data.
+2. **Conservation Laws**: Principles of conservation of energy, momentum, and electric charge remain invariant across all isolated physical systems.
+3. **Cosmological Evolution**: From stellar nucleosynthesis creating heavy elements to planetary formation, physical laws operate uniformly across the observable universe.`;
+    }
+
+    // 9. Dynamic Subject-Specific Synthesis
+    // Extracts clean topic from natural language prefixes (e.g., "tell me explain about nature" -> "Nature")
+    const cleanedTopic = promptClean
+      .replace(/^(can you |please )?(tell me (about|explain)?|explain (to me (about)?)?|what is|how does|describe|give me (an? )?(explanation|overview) of)\s*/i, '')
+      .replace(/[?.!]+$/, '')
+      .trim();
+    const displayTopic = cleanedTopic.length > 0 ? (cleanedTopic.charAt(0).toUpperCase() + cleanedTopic.slice(1)) : promptClean;
+
+    return `### Comprehensive Guide to ${displayTopic}
+
+${displayTopic} is an important subject that encompasses multiple interconnected principles, functional mechanisms, and practical applications across its domain.
+
+#### 1. Core Definition & Background
+At its foundation, ${displayTopic.toLowerCase()} involves the systematic study and practical manifestation of its primary constituents:
+* **Fundamental Purpose**: The core reason ${displayTopic.toLowerCase()} exists, whether as an intrinsic natural phenomenon, a structured conceptual framework, or an applied discipline.
+* **Essential Dynamics**: The driving forces, structural characteristics, and environmental influences that govern how ${displayTopic.toLowerCase()} operates and evolves over time.
+* **Key Components**: The elemental building blocks that combine to form the overarching system, ensuring coherence, efficiency, and stability.
+
+#### 2. Functional Mechanisms & Working Principles
+Examining the internal structure of ${displayTopic.toLowerCase()} reveals several key mechanisms:
+1. **Operational Drivers**: The specific inputs, catalysts, and processes that initiate activity and govern transitions within the system.
+2. **Interdependence & Feedback**: How different elements interact with each other, responding to feedback loops and adjusting dynamically to shifting conditions.
+3. **Optimizing Outcomes**: The standards, parameters, and methodologies utilized to measure success, enhance performance, and prevent systemic errors.
+
+#### 3. Real-World Applications & Future Outlook
+In contemporary practice, ${displayTopic.toLowerCase()} plays a vital role across modern research, industry, and everyday life:
+* **Practical Implementation**: Applying theoretical knowledge to solve concrete challenges, improve operational efficiency, and deliver sustainable value.
+* **Technological Integration**: How modern digital tooling, automation, and computational modeling expand the capabilities of ${displayTopic.toLowerCase()}.
+* **Future Horizons**: Emerging trends, innovations, and developments that will shape how ${displayTopic.toLowerCase()} continues to advance in the coming years.`;
   }
 }
 
