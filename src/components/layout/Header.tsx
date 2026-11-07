@@ -85,6 +85,29 @@ export const Header: React.FC = () => {
           />
           Usage-Based AI Gateway
         </span>
+
+        {/* Hedera Code Showcase Link */}
+        <a
+          href="./hedera-code.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fin-badge hide-on-mobile"
+          style={{
+            backgroundColor: '#0F172A',
+            color: '#00E39E',
+            border: '2px solid #00E39E',
+            fontSize: '13px',
+            padding: '7px 14px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          <span>⚡ Hedera Code</span>
+        </a>
       </div>
 
       {/* Right Controls */}
