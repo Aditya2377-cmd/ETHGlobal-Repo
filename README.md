@@ -3,6 +3,13 @@
 > **Payper** is an enterprise-grade fintech application that unlocks usage-based AI generation. Prompts are computed privately via Groq, input and output token consumption is precisely measured, and exact usage is settled on the **Hedera Testnet** using the **x402 v2** protocol before the response is released.
 
 ---
+[![Vercel Deployment](https://img.shields.io/badge/Live_Demo-Vercel-black?style=flat&logo=vercel)](https://perpay.vercel.app/)
+[![Hedera Testnet](https://img.shields.io/badge/Hedera_Explorer-HashScan-blue?style=flat)](https://hashscan.io/testnet/transaction/0.0.11326692@1794032145.605649051)
+[![Built at ETHGlobal](https://img.shields.io/badge/Hackathon-ETHGlobal_2024-purple?style=flat)]()
+
+> **Live Links:**
+> - 🌐 **Interactive Web App:** [perpay.vercel.app](https://perpay.vercel.app/)
+> - ⛓️ **Verified Hedera Testnet Transfer:** [HashScan Transaction 0.0.11326692@1794032145.605649051](https://hashscan.io/testnet/transaction/0.0.11326692@1794032145.605649051)
 
 ## 1. Product Identity & Design Principles
 
@@ -77,14 +84,22 @@ The animated procedural network from CodePen (`kakaxi0618/pen/JmLpYj`, MIT Licen
 1. **Home / Overview**: Connected wallet status, balance query, prominent "New AI Request" action, pending invoice alert banner, usage metrics (tokens, requests, HBAR paid), and recent settlement activity table.
 2. **AI Workspace**: Model selector (`llama-3.3-70b-versatile`, `mixtral-8x7b-32768`, `gemma2-9b-it`, `llama-3.1-8b-instant`), max token controls, transparent pricing schedule, prompt validation, and automatic submission lockout if an unpaid invoice exists.
 3. **Generation Progress**: Real-time 5-step lifecycle monitor (Validating → Private Generation → Token Accounting → Hedera Charge Calculation → Invoice Generation) without artificial percentage bars.
-4. **Invoice & Payment Review**: Perforated financial invoice displaying Invoice ID, Generation ID, Token breakdown, exact HBAR and tinybars, receiving treasury account (`0.0.5109822`), and expandable technical x402 v2 protocol drawer.
+4. **Invoice & Payment Review**: Perforated financial invoice displaying Invoice ID, Generation ID, Token breakdown, exact HBAR and tinybars, receiving treasury account (`0.0.11326767`), and expandable technical x402 v2 protocol drawer.
 5. **Wallet Authorization & Settlement**: Explicit authorization flow supporting HashPack, Blade, and direct Hedera testnet accounts. Strict zero-custody guarantee (private keys are never requested or stored).
 6. **Unlocked AI Response**: Markdown rendered response output, copy-to-clipboard feedback, cryptographic audit receipt with live [HashScan Testnet](https://hashscan.io/testnet) transaction link, and permanent re-retrieval without recharging.
 7. **Activity Ledger**: Filterable transaction table with search, status filters (Confirmed, Pending), date sorting, and CSV export.
 8. **Pricing & Account Policy**: Unpaid invoice restriction status, account profile, model pricing schedule per 1M tokens, and network health monitors.
 
 ---
+## ⛓️ Cryptographic Settlement Verification
 
+Every generation is backed by an atomic transfer on Hedera Testnet using the `@hashgraph/sdk`.
+
+- **Payer Account:** `0.0.11326692`
+- **Receiver Treasury Account:** `0.0.11326767`
+- **Settlement Amount:** 15,000 tinybars (`0.00015 HBAR`)
+- **Consensus Finality:** Sub-3 seconds
+- **On-Chain Audit Receipt:** [View Transaction on HashScan](https://hashscan.io/testnet/transaction/0.0.11326692@1794032145.605649051)
 ## 5. Development & Verification Guide
 
 ### Prerequisites
@@ -115,7 +130,7 @@ VITE_GATEWAY_URL=http://localhost:8000
 VITE_X402_FACILITATOR_URL=http://localhost:4020
 
 # PerPay Receiving Treasury Account (Hedera Testnet)
-VITE_PERPAY_TREASURY_ACCOUNT=0.0.5109822
+VITE_PERPAY_TREASURY_ACCOUNT=0.0.11326767
 
 # Network
 VITE_HEDERA_NETWORK=hedera:testnet
